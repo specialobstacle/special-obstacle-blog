@@ -1,0 +1,34 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+---
+
+<BaseLayout title="About">
+  <article class="prose">
+    <h1>关于我</h1>
+    <p>
+      你好，我是这个博客的作者。这里记录我的技术笔记、生活随笔与职场思考，
+      也承载我的简历。用 Git 管理 Markdown，把写作和版本控制统一在一起。
+    </p>
+
+    <h2>这个博客</h2>
+    <p>
+      基于 Astro + React + Tailwind 搭建，SSR 部署在 Vercel。
+      内容即 <code>src/content/posts/*.md</code>，标签即 <code>src/content/tags/*.yml</code>，
+      支持私密标签与单管理员鉴权，部分内容只有我自己登录后才能看到。
+    </p>
+
+    <h2>写作频率</h2>
+    {/* 阶段 4：此处渲染文章发布热力图（按 published 字段聚合）。
+        届时替换下方占位容器，数据源走 filterVisiblePosts(isAdmin)。 */}
+    <div
+      class="flex min-h-[200px] items-center justify-center rounded-lg border border-dashed border-border bg-surface text-sm text-text-muted"
+    >
+      热力图将在阶段 4 上线
+    </div>
+
+    <h2>联系</h2>
+    <p>
+      想联系我？可以通过下方简历页或文章留言（留言系统规划中）。
+    </p>
+  </article>
+</BaseLayout>

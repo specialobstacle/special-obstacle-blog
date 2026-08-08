@@ -1,0 +1,29 @@
+---
+import { render } from 'astro:content';
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { filterVisiblePosts } from '../lib/visibility';
+
+const { isAdmin } = Astro.locals;
+
+// resume 是 posts 集合中 category:resume 的特殊文章（数据模型上并非独立表）。
+// 复用 filterVisiblePosts：若管理员把简历设为私密/草稿，访客同样看不到。
+const all = await filterVisiblePosts(isAdmin);
+const resume = all.find((p) => p.data.category === 'resume');
+
+// 有则渲染 Markdown 正文；无则占位（不 404——导航点进来应给提示而非撞墙）
+const rendered = resume ? await render(resume) : null;
+---
+
+<BaseLayout title="Resume">
+  {resume && rendered ? (
+    <article class="prose">
+      <h1>{resume.data.title}</h1>
+      <rendered.Content />
+    </article>
+  ) : (
+    <section class="py-20 text-center">
+      <h1 class="text-2xl font-semibold">简历</h1>
+      <p class="mt-2 text-text-muted">简历尚未发布，敬请期待。</p>
+    </section>
+  )}
+</BaseLayout>
