@@ -1,0 +1,23 @@
+---
+import PostListPage from '../../components/PostListPage.astro';
+import { getVisiblePostsByTag } from '../../lib/visibility';
+
+const { tag } = Astro.params;
+const { isAdmin } = Astro.locals;
+
+const { tag: tagEntry, posts } = tag
+  ? await getVisiblePostsByTag(tag, isAdmin)
+  : { tag: null, posts: [] };
+
+// 标签不存在 / 私密且非管理员 / 无可见文章 → 404，绝不暴露标签存在性
+if (!tagEntry) {
+  return Astro.redirect('/404');
+}
+---
+
+<PostListPage
+  title={`标签：${tagEntry.data.name}`}
+  posts={posts}
+  showAdminBadges={isAdmin}
+  emptyHint="该标签下暂时没有文章。"
+/>
