@@ -1,0 +1,37 @@
+# build output
+dist/
+# generated types
+.astro/
+
+# dependencies
+node_modules/
+
+# logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+
+# environment variables
+.env
+.env.production
+
+# macOS-specific files
+.DS_Store
+
+# jetbrains setting folder
+.idea/
+.vercel
+
+# VS Code 用户级配置（保留 .vscode 共享配置）
+.vscode/settings.json
+
+# Windows
+Thumbs.db
+
+# 临时验证文件
+.astro-check-*.html
+
+# ZCode 客户端会话/缓存目录
+.zcode/

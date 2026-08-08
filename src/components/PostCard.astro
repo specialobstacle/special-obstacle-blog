@@ -1,0 +1,58 @@
+---
+import type { PostEntry } from '../lib/visibility';
+import {
+  DOMAIN_LABELS,
+  CATEGORY_LABELS,
+  type Domain,
+  type Category,
+} from '../lib/constants';
+
+interface Props {
+  post: PostEntry;
+  showAdminBadge?: boolean;
+}
+
+const { post, showAdminBadge = false } = Astro.props;
+const { title, excerpt, published, domain, category, private: isPrivate, draft } =
+  post.data;
+
+const dateStr = published.toLocaleDateString('zh-CN', {
+  year: 'numeric',
+  month: '2-digit',
+  day: '2-digit',
+});
+---
+
+<article class="group rounded-lg border border-border bg-bg p-5 transition hover:border-primary/50">
+  <div class="mb-2 flex items-center gap-2 text-xs text-text-muted">
+    <span class="rounded bg-surface px-1.5 py-0.5">
+      {DOMAIN_LABELS[domain as Domain]}
+    </span>
+    <span class="rounded bg-surface px-1.5 py-0.5">
+      {CATEGORY_LABELS[category as Category]}
+    </span>
+    {draft && (
+      <span class="rounded bg-amber-500/15 px-1.5 py-0.5 text-amber-600">
+        草稿
+      </span>
+    )}
+    {isPrivate && showAdminBadge && (
+      <span class="rounded bg-rose-500/15 px-1.5 py-0.5 text-rose-500">
+        私密
+      </span>
+    )}
+    <span>·</span>
+    <time datetime={published.toISOString()}>{dateStr}</time>
+  </div>
+
+  <h3 class="mb-1 text-lg font-semibold">
+    <a
+      href={`/posts/${post.id}`}
+      class="text-text transition group-hover:text-primary"
+    >
+      {title}
+    </a>
+  </h3>
+
+  {excerpt && <p class="line-clamp-2 text-sm text-text-muted">{excerpt}</p>}
+</article>

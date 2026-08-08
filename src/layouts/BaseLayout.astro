@@ -1,0 +1,51 @@
+---
+import Header from '../components/Header.astro';
+import '../styles/global.css';
+
+interface Props {
+  title: string;
+  description?: string;
+}
+
+const { title, description = '个人博客 · 技术 / 生活 / 职场' } = Astro.props;
+const siteTitle = title === 'Home' ? 'My Blog' : `${title} · My Blog`;
+---
+
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="generator" content={Astro.generator} />
+    <title>{siteTitle}</title>
+    <meta name="description" content={description} />
+
+    {/* 阻塞脚本：在首帧前确定主题，避免暗色模式闪白 (FOUC) */}
+    <script is:inline>
+      (function () {
+        try {
+          var stored = localStorage.getItem('theme');
+          var prefersDark = window.matchMedia(
+            '(prefers-color-scheme: dark)',
+          ).matches;
+          var dark = stored ? stored === 'dark' : prefersDark;
+          document.documentElement.classList.toggle('dark', dark);
+        } catch (e) {
+          /* localStorage 被禁用时静默降级 */
+        }
+      })();
+    </script>
+  </head>
+  <body class="bg-bg text-text">
+    <Header />
+    <main class="mx-auto max-w-5xl px-4 py-8">
+      <slot />
+    </main>
+    <footer class="border-t border-border">
+      <div class="mx-auto max-w-5xl px-4 py-6 text-sm text-text-muted">
+        © {new Date().getFullYear()} My Blog · Built with Astro
+      </div>
+    </footer>
+  </body>
+</html>

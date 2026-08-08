@@ -1,0 +1,41 @@
+---
+import type { MarkdownHeading } from 'astro';
+
+interface Props {
+  headings: MarkdownHeading[];
+}
+
+const { headings } = Astro.props;
+// 需求：右侧目录只列二级标题，点击直接跳转
+const h2 = headings.filter((h) => h.depth === 2);
+---
+
+{
+  h2.length > 0 && (
+    <nav class="toc">
+      <p class="mb-2 text-xs font-semibold uppercase tracking-wide text-text-muted">
+        目录
+      </p>
+      <ul class="space-y-1 border-l border-border text-sm">
+        {h2.map((h) => (
+          <li>
+            <a
+              href={`#${h.slug}`}
+              class="-ml-px block border-l border-transparent py-1 pl-3 text-text-muted transition hover:border-primary hover:text-primary"
+            >
+              {h.text}
+            </a>
+          </li>
+        ))}
+      </ul>
+    </nav>
+  )
+}
+
+<style>
+  /* sticky：滚动时目录常驻右侧 */
+  .toc {
+    position: sticky;
+    top: 5rem;
+  }
+</style>

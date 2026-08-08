@@ -1,0 +1,65 @@
+---
+import { NAV_ITEMS } from '../lib/constants';
+import ThemeToggle from './ThemeToggle.tsx';
+
+const { pathname } = Astro.url;
+const { isAdmin } = Astro.locals;
+
+// 判断当前路径是否属于某个导航项（含子项）
+function isActive(href: string): boolean {
+  if (href === '/') return pathname === '/';
+  return pathname === href || pathname.startsWith(href + '/');
+}
+---
+
+<header class="sticky top-0 z-40 border-b border-border bg-bg/85 backdrop-blur">
+  <div class="mx-auto flex h-14 max-w-5xl items-center gap-2 px-4">
+    <a href="/" class="mr-4 font-semibold text-text">My Blog</a>
+
+    <nav class="flex flex-1 items-center gap-1 text-sm">
+      {NAV_ITEMS.map((item) => (
+        <div class="group relative">
+          <a
+            href={item.href}
+            class:list={[
+              'rounded-md px-3 py-1.5 transition',
+              isActive(item.href)
+                ? 'bg-surface text-primary'
+                : 'text-text-muted hover:text-text',
+            ]}
+          >
+            {item.label}
+            {'children' in item && item.children && (
+              <span class="ml-1 opacity-60">▾</span>
+            )}
+          </a>
+
+          {'children' in item && item.children && (
+            <div class="invisible absolute left-0 top-full min-w-[8rem] rounded-md border border-border bg-bg py-1 opacity-0 shadow-lg transition group-hover:visible group-hover:opacity-100">
+              {item.children.map((child) => (
+                <a
+                  href={child.href}
+                  class="block px-3 py-1.5 text-text-muted hover:bg-surface hover:text-text"
+                >
+                  {child.label}
+                </a>
+              ))}
+            </div>
+          )}
+        </div>
+      ))}
+    </nav>
+
+    <div class="flex items-center gap-2">
+      {isAdmin && (
+        <span
+          title="当前为管理员视图"
+          class="rounded-full bg-primary/15 px-2 py-0.5 text-xs text-primary"
+        >
+          admin
+        </span>
+      )}
+      <ThemeToggle client:load />
+    </div>
+  </div>
+</header>

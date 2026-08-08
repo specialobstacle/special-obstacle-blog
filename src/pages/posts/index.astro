@@ -1,0 +1,17 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import PostList from '../../components/PostList.astro';
+import { filterVisiblePosts } from '../../lib/visibility';
+
+const { isAdmin } = Astro.locals;
+const posts = await filterVisiblePosts(isAdmin);
+---
+
+<BaseLayout title="Posts">
+  <h1 class="mb-6 text-2xl font-bold">全部文章</h1>
+  <PostList
+    posts={posts}
+    showAdminBadges={isAdmin}
+    emptyHint="还没有任何文章。"
+  />
+</BaseLayout>

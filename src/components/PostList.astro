@@ -1,0 +1,26 @@
+---
+import type { PostEntry } from '../lib/visibility';
+import PostCard from './PostCard.astro';
+
+interface Props {
+  posts: PostEntry[];
+  showAdminBadges?: boolean;
+  emptyHint?: string;
+}
+
+const {
+  posts,
+  showAdminBadges = false,
+  emptyHint = '暂时没有文章。',
+} = Astro.props;
+---
+
+{posts.length === 0 ? (
+  <p class="py-12 text-center text-text-muted">{emptyHint}</p>
+) : (
+  <div class="grid gap-3">
+    {posts.map((post) => (
+      <PostCard post={post} showAdminBadge={showAdminBadges} />
+    ))}
+  </div>
+)}
