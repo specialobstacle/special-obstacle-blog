@@ -1,0 +1,9 @@
+---
+import { COOKIE_NAME } from '../lib/auth';
+
+// SSR 纯逻辑页：清 cookie 后回首页。
+// 采用 GET 而非 POST：登出不涉及敏感数据变更，风险极低；
+// 入口已在 Header 内嵌为同源链接，被 CSRF 利用也只会让用户登出（无害）。
+Astro.cookies.delete(COOKIE_NAME, { path: '/' });
+return Astro.redirect('/');
+---

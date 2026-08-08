@@ -59,6 +59,24 @@ function isActive(href: string): boolean {
           admin
         </span>
       )}
+      {/* 登录态入口：运行时判断，不属于静态导航，故直接改 Header 而非 NAV_ITEMS */}
+      {isAdmin ? (
+        <a
+          href="/logout"
+          title="退出登录"
+          class="rounded-full border border-primary/40 px-3 py-1 text-sm text-primary transition hover:border-primary"
+        >
+          登出
+        </a>
+      ) : (
+        <a
+          href="/login"
+          title="管理员登录"
+          class="rounded-full border border-border px-3 py-1 text-sm text-text transition hover:border-primary"
+        >
+          登录
+        </a>
+      )}
       <ThemeToggle client:load />
     </div>
   </div>

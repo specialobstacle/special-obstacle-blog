@@ -1,0 +1,137 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { checkPassword, issueToken, COOKIE_NAME } from '../lib/auth';
+import {
+  checkLoginRate,
+  recordLoginFailure,
+  recordLoginSuccess,
+} from '../lib/rateLimit';
+import { isSameOriginRequest } from '../lib/csrf';
+
+// 此页为 SSR：读 Astro.locals 与处理 POST，绝不预渲染。
+const { isAdmin } = Astro.locals;
+
+// 已登录访问 /login → 直接回首页，避免重复登录
+if (isAdmin) {
+  return Astro.redirect('/');
+}
+
+// ---------- POST 处理 ----------
+if (Astro.request.method === 'POST') {
+  // 取客户端 IP：Vercel adapter 会注入真实 IP；本地 dev 可能是 ::1
+  const ip = Astro.clientAddress ?? 'unknown';
+
+  // 1) 速率限制优先拦截
+  const rate = checkLoginRate(ip);
+  if (!rate.allowed) {
+    return Astro.redirect('/login?locked=1');
+  }
+
+  // 2) CSRF：非同源 POST 一律拒绝
+  if (!isSameOriginRequest(Astro.request)) {
+    return new Response('Forbidden', { status: 403 });
+  }
+
+  // 3) 解析表单（解析失败按错误处理）
+  let parsed: { password: string; next: string };
+  try {
+    const form = await Astro.request.formData();
+    const rawNext = String(form.get('next') ?? '/');
+    // 防开放重定向：只允许站内绝对路径（非 // 开头）
+    parsed = {
+      password: String(form.get('password') ?? ''),
+      next:
+        rawNext.startsWith('/') && !rawNext.startsWith('//')
+          ? rawNext
+          : '/',
+    };
+  } catch {
+    return Astro.redirect('/login?error=1');
+  }
+
+  // 4) 校验密码
+  if (checkPassword(parsed.password)) {
+    recordLoginSuccess(ip);
+    const token = issueToken();
+    Astro.cookies.set(COOKIE_NAME, token, {
+      httpOnly: true,
+      secure: import.meta.env.PROD, // 本地 http dev 放行，生产 https 强制
+      sameSite: 'lax',
+      path: '/',
+      maxAge: 60 * 60 * 24 * 30, // 30 天，与 token TTL 对齐
+    });
+    return Astro.redirect(parsed.next);
+  }
+
+  // 失败：计数 + 回表单，统一文案不暴露原因
+  recordLoginFailure(ip);
+  return Astro.redirect('/login?error=1');
+}
+
+// ---------- GET 渲染 ----------
+const url = Astro.url;
+const showError = url.searchParams.get('error') === '1';
+const showLocked = url.searchParams.get('locked') === '1';
+const next = url.searchParams.get('next') ?? '/';
+// next 同样做站内校验，避免隐藏域被注入外链
+const safeNext =
+  next.startsWith('/') && !next.startsWith('//') ? next : '/';
+---
+
+<BaseLayout title="Login">
+  <section class="mx-auto max-w-sm">
+    <h1 class="text-2xl font-semibold">登录</h1>
+    <p class="mt-1 text-sm text-text-muted">仅管理员可登录查看私密内容。</p>
+
+    {(showError || showLocked) && (
+      <div class="mt-4 rounded-md border border-border bg-surface px-4 py-3 text-sm text-text">
+        {showLocked
+          ? '尝试次数过多，请稍后再试。'
+          : '密码或验证失败，请重试。'}
+      </div>
+    )}
+
+    <form method="POST" action="/login" class="mt-6 space-y-4">
+      <input type="hidden" name="next" value={safeNext} />
+
+      <div>
+        <label for="password" class="block text-sm font-medium text-text">
+          密码
+        </label>
+        <input
+          id="password"
+          name="password"
+          type="password"
+          autocomplete="current-password"
+          required
+          autofocus
+          class="mt-1 w-full rounded-md border border-border bg-bg px-3 py-2 text-text outline-none transition focus:border-primary"
+        />
+      </div>
+
+      <label class="flex items-center gap-2 text-sm text-text-muted">
+        <input id="show-pwd" type="checkbox" class="accent-primary" />
+        显示密码
+      </label>
+
+      <button
+        type="submit"
+        class="w-full rounded-md bg-primary px-4 py-2 text-sm font-medium text-white transition hover:bg-primary-hover"
+      >
+        登录
+      </button>
+    </form>
+  </section>
+
+  {/* 显示密码切换：原生 JS，无需 React 岛屿 */}
+  <script is:inline>
+    (function () {
+      var cb = document.getElementById('show-pwd');
+      var input = document.getElementById('password');
+      if (!cb || !input) return;
+      cb.addEventListener('change', function () {
+        input.type = cb.checked ? 'text' : 'password';
+      });
+    })();
+  </script>
+</BaseLayout>
