@@ -39,6 +39,61 @@ interface Hit extends SearchResult {
 const DEBOUNCE_MS = 150;
 const MAX_RESULTS = 8;
 
+/**
+ * 中文/CJK 分词：MiniSearch 默认 tokenize 用 `split(/\W+/)`，
+ * 而 `\w` 不含汉字，导致"TypeScript 类型体操入门"里只有 `typescript` 进索引，
+ * 中文整段被当"非单词字符"丢弃，搜"体操"必然 0 命中。
+ *
+ * 方案 A：自定义分词，CJK 段按单字成 token（`体`、`操` 各一个 token），
+ * Latin 段仍按非单词字符切分。索引侧与查询侧共用同一套逻辑。
+ *
+ * 注意 MiniSearch 的 processTerm 默认会再 `split(/\W+/)` 一次，
+ * 会把 CJK token 又拆没，所以这里对 CJK token 原样返回（仅 lower-case）。
+ */
+const CJK_RANGE = /[\u4e00-\u9fa5\u3040-\u30ff\uac00-\ud7af]/; // 中日韩基本区
+
+function tokenizeCJK(text: string): string[] {
+  // 先把 Latin 段（ASCII）和 CJK 段切开，避免英文词被按字拆散
+  const tokens: string[] = [];
+  // 匹配：要么是一段连续 CJK 字符（之后按字拆），要么是一段连续"单词字符"（英文/数字）
+  const re = /[\u4e00-\u9fa5\u3040-\u30ff\uac00-\ud7af]+|[A-Za-z0-9_]+/g;
+  for (const chunk of text.matchAll(re)) {
+    const s = chunk[0];
+    if (CJK_RANGE.test(s)) {
+      // CJK：按字拆
+      for (const ch of Array.from(s)) tokens.push(ch);
+    } else {
+      tokens.push(s.toLowerCase());
+    }
+  }
+  return tokens;
+}
+
+function processTermCJK(term: string): string | null | undefined {
+  // 过滤掉纯空白/标点；CJK token 原样保留（默认实现会拆没它）
+  if (!term || !term.trim()) return null;
+  return term.toLowerCase();
+}
+
+function buildMiniSearch(docs?: SearchDoc[]): MiniSearch<SearchDoc> {
+  const ms = new MiniSearch<SearchDoc>({
+    fields: ['title', 'excerpt'],
+    storeFields: ['title', 'excerpt', 'domain', 'category', 'url'],
+    tokenize: tokenizeCJK,
+    processTerm: processTermCJK,
+    searchOptions: {
+      prefix: true,
+      fuzzy: 0.2,
+      boost: { title: 2 },
+      // 查询侧同样按字切，否则索引按字、查询按词，仍然对不上
+      tokenize: tokenizeCJK,
+      processTerm: processTermCJK,
+    },
+  });
+  if (docs) ms.addAll(docs);
+  return ms;
+}
+
 export default function SearchBox() {
   const [mounted, setMounted] = useState(false);
   const [open, setOpen] = useState(false); // 是否展开输入框
@@ -85,23 +140,10 @@ export default function SearchBox() {
       try {
         const res = await fetch('/api/search.json');
         const docs: SearchDoc[] = res.ok ? await res.json() : [];
-        const ms = new MiniSearch<SearchDoc>({
-          fields: ['title', 'excerpt'],
-          storeFields: ['title', 'excerpt', 'domain', 'category', 'url'],
-          searchOptions: {
-            prefix: true,
-            fuzzy: 0.2,
-            boost: { title: 2 },
-          },
-        });
-        ms.addAll(docs);
-        miniSearchRef.current = ms;
+        miniSearchRef.current = buildMiniSearch(docs);
       } catch {
         // 网络或解析失败：静默降级为空索引
-        miniSearchRef.current = new MiniSearch<SearchDoc>({
-          fields: ['title', 'excerpt'],
-          storeFields: ['title', 'excerpt', 'domain', 'category', 'url'],
-        });
+        miniSearchRef.current = buildMiniSearch();
       } finally {
         setLoading(false);
       }
