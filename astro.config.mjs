@@ -4,6 +4,8 @@ import { defineConfig } from 'astro/config';
 import tailwindcss from '@tailwindcss/vite';
 import react from '@astrojs/react';
 import vercel from '@astrojs/vercel';
+import { satteri } from '@astrojs/markdown-satteri';
+import stripH1 from './src/plugins/strip-h1';
 
 // https://astro.build/config
 export default defineConfig({
@@ -21,4 +23,11 @@ export default defineConfig({
   integrations: [react()],
 
   adapter: vercel(),
+
+  // 剥离正文里的 H1：一级标题统一由详情页模板用 frontmatter 的 title 渲染，
+  // 正文从 ## 起笔，避免详情页出现两个重复的 H1。stripH1 是 Sätteri mdast 插件，
+  // 在默认 Rust 处理器上兜底——即使作者误写 #，也只在标题区出现一次。
+  markdown: {
+    processor: satteri({ mdastPlugins: [stripH1] }),
+  },
 });
