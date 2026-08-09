@@ -69,6 +69,7 @@ description: 简介
 - 访客：看不到 `draft`（生产）、`private: true` 的文章，也看不到任何绑定了 private 标签的文章——不出现在列表、不可访问 URL、不被搜索命中。
 - 管理员：通过 `/login` 输入密码登录后，线上也能看到全部内容（Header 显示「登出」入口）。
 - **所有可见性判断必须经过 `src/lib/visibility.ts` 的 `filterVisiblePosts(isAdmin)`**，不允许在调用处自行 if，避免漏判导致私密内容泄露。
+- 搜索索引端点（`/api/search.json`）、单篇导出端点（`/posts/[slug].md`）、About 页热力图聚合（`src/lib/heatmap.ts`）**全部经 `filterVisiblePosts` / `getVisiblePost`**——私密文章对访客不进索引、不可导出、不计入热力图。
 - 登录由 `/login`（密码 + HMAC token cookie）与 `/logout`（清 cookie）处理，含速率限制（`src/lib/rateLimit.ts`）与 CSRF 同源校验（`src/lib/csrf.ts`）。部署流程见 `docs/vercel-deploy.md`。
 
 ## 常用命令
@@ -92,8 +93,8 @@ description: 简介
 
 - ✅ 阶段 1（MVP）：脚手架、数据模型、可见性系统、鉴权基建、首页/列表/详情、暗色模式
 - ✅ 阶段 2：分类页 / 标签集合页 / 标签详情页 / About / Resume / 404
-- ⏳ 阶段 3：部署 Vercel + 线上密码门（`/login`、`/logout`、速率限制、CSRF 已就绪，待部署；见 `docs/vercel-deploy.md`）
-- ⏳ 阶段 4：搜索 / 导出 / About 热力图
+- ✅ 阶段 3：部署 Vercel + 线上密码门（`/login`、`/logout`、速率限制、CSRF；见 `docs/vercel-deploy.md`）
+- ✅ 阶段 4：全站搜索（MiniSearch）、单篇导出 Markdown、About 页写作频率热力图
 - ⏳ 阶段 5：完善 `docs/` 与 `AGENTS.md`
 
 ## 协作约定
