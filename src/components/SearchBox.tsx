@@ -254,76 +254,96 @@ export default function SearchBox() {
   }
 
   // 展开态：输入框 + 下拉结果
+  //
+  // 移动端（<sm）：搜索框 fixed 定位成顶栏下方全宽浮层，脱离顶栏横向流，
+  //   避免输入框宽度撑爆顶栏导致工具栏溢出视口。
+  // 桌面端（sm+）：恢复行内布局（顶栏内 w-44/w-56 输入框 + 右下下拉）。
+  //   所有移动端样式都用裸类、桌面端用 sm:/md: 覆盖回去，保证桌面零变化。
   return (
     <div ref={containerRef} className="relative">
-      <div className="flex items-center">
-        <input
-          ref={inputRef}
-          type="search"
-          value={query}
-          onChange={onChange}
-          onKeyDown={onKeyDown}
-          placeholder={loading ? '加载索引中…' : '搜索文章…'}
-          autoComplete="off"
-          aria-label="搜索文章"
-          className="h-9 w-44 rounded-md border border-border bg-bg px-3 text-sm text-text outline-none transition focus:border-primary focus:w-56 md:w-56"
-        />
-        <button
-          type="button"
-          onClick={close}
-          aria-label="关闭搜索"
-          title="关闭"
-          className="ml-1 flex h-9 w-7 items-center justify-center rounded-md text-text-muted transition hover:text-text"
-        >
-          ✕
-        </button>
-      </div>
-
-      {query.trim() && (
-        <div className="absolute right-0 top-full z-50 mt-2 w-80 overflow-hidden rounded-md border border-border bg-bg shadow-lg md:w-96">
-          {results.length === 0 ? (
-            <div className="px-3 py-6 text-center text-sm text-text-muted">
-              {loading ? '加载索引中…' : '没有匹配的文章'}
-            </div>
-          ) : (
-            <ul className="max-h-80 overflow-y-auto py-1">
-              {results.map((hit, i) => (
-                <li key={hit.id}>
-                  <button
-                    type="button"
-                    onMouseEnter={() => setActiveIndex(i)}
-                    onClick={() => selectHit(hit)}
-                    className={
-                      'block w-full px-3 py-2 text-left transition ' +
-                      (i === activeIndex ? 'bg-surface' : 'hover:bg-surface')
-                    }
-                  >
-                    <div className="flex items-center gap-2">
-                      <span
-                        className="truncate text-sm font-medium text-text"
-                        dangerouslySetInnerHTML={{
-                          __html: highlight(hit.title, matchTerms),
-                        }}
-                      />
-                      <span className="shrink-0 rounded bg-surface px-1.5 py-0.5 text-[10px] text-text-muted">
-                        {DOMAIN_LABELS[hit.domain] ?? hit.domain}
-                      </span>
-                    </div>
-                    {hit.excerpt && (
-                      <div
-                        className="mt-0.5 line-clamp-1 text-xs text-text-muted"
-                        dangerouslySetInnerHTML={{
-                          __html: highlight(hit.excerpt, matchTerms),
-                        }}
-                      />
-                    )}
-                  </button>
-                </li>
-              ))}
-            </ul>
-          )}
+      <div
+        className={
+          'fixed left-0 right-0 top-14 z-50 border-b border-border bg-bg px-4 py-2 ' +
+          'sm:static sm:inset-auto sm:z-auto sm:border-0 sm:bg-transparent sm:p-0 sm:flex sm:items-center'
+        }
+      >
+        <div className="flex items-center">
+          <input
+            ref={inputRef}
+            type="search"
+            value={query}
+            onChange={onChange}
+            onKeyDown={onKeyDown}
+            placeholder={loading ? '加载索引中…' : '搜索文章…'}
+            autoComplete="off"
+            aria-label="搜索文章"
+            className={
+              'h-9 w-full flex-1 rounded-md border border-border bg-bg px-3 text-sm text-text outline-none transition focus:border-primary ' +
+              'sm:w-44 sm:flex-none sm:focus:w-56 md:w-56'
+            }
+          />
+          <button
+            type="button"
+            onClick={close}
+            aria-label="关闭搜索"
+            title="关闭"
+            className="ml-1 flex h-9 w-7 shrink-0 items-center justify-center rounded-md text-text-muted transition hover:text-text"
+          >
+            ✕
+          </button>
         </div>
-      )}
+
+        {query.trim() && (
+          <div
+            className={
+              'static mt-2 w-full overflow-hidden rounded-md border border-border bg-bg shadow-lg ' +
+              'sm:absolute sm:right-0 sm:top-full sm:z-50 sm:mt-2 sm:w-80 md:w-96'
+            }
+          >
+            {results.length === 0 ? (
+              <div className="px-3 py-6 text-center text-sm text-text-muted">
+                {loading ? '加载索引中…' : '没有匹配的文章'}
+              </div>
+            ) : (
+              <ul className="max-h-80 overflow-y-auto py-1">
+                {results.map((hit, i) => (
+                  <li key={hit.id}>
+                    <button
+                      type="button"
+                      onMouseEnter={() => setActiveIndex(i)}
+                      onClick={() => selectHit(hit)}
+                      className={
+                        'block w-full px-3 py-2 text-left transition ' +
+                        (i === activeIndex ? 'bg-surface' : 'hover:bg-surface')
+                      }
+                    >
+                      <div className="flex items-center gap-2">
+                        <span
+                          className="truncate text-sm font-medium text-text"
+                          dangerouslySetInnerHTML={{
+                            __html: highlight(hit.title, matchTerms),
+                          }}
+                        />
+                        <span className="shrink-0 rounded bg-surface px-1.5 py-0.5 text-[10px] text-text-muted">
+                          {DOMAIN_LABELS[hit.domain] ?? hit.domain}
+                        </span>
+                      </div>
+                      {hit.excerpt && (
+                        <div
+                          className="mt-0.5 line-clamp-1 text-xs text-text-muted"
+                          dangerouslySetInnerHTML={{
+                            __html: highlight(hit.excerpt, matchTerms),
+                          }}
+                        />
+                      )}
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        )}
+      </div>
     </div>
   );
 }
