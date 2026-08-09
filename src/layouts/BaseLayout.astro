@@ -8,7 +8,7 @@ interface Props {
 }
 
 const { title, description = '个人博客 · 技术 / 生活 / 职场' } = Astro.props;
-const siteTitle = title === 'Home' ? 'My Blog' : `${title} · My Blog`;
+const siteTitle = title === 'Home' ? 'Special Obstacle\'s Blog' : `${title} · Special Obstacle's Blog`;
 ---
 
 <!doctype html>
@@ -44,7 +44,7 @@ const siteTitle = title === 'Home' ? 'My Blog' : `${title} · My Blog`;
     </main>
     <footer class="border-t border-border">
       <div class="mx-auto max-w-5xl px-4 py-6 text-sm text-text-muted">
-        © {new Date().getFullYear()} My Blog · Built with Astro
+        © {new Date().getFullYear()} Special Obstacle's Blog · Built with Astro
       </div>
     </footer>
   </body>
