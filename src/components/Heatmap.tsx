@@ -3,10 +3,16 @@ import type { YearGrid, DayCell } from '../lib/heatmap';
 /**
  * 写作频率热力图（React island）。
  *
- * 零依赖，手写 div 网格。数据已在前端外（about.astro frontmatter）
+ * 零依赖，手写 CSS Grid。数据已在前端外（about.astro frontmatter）
  * 经 filterVisiblePosts 聚合好，组件只负责渲染。
  *
  * 暗色模式自动跟随（用 bg-surface / bg-primary token，无写死颜色）。
+ *
+ * 布局对齐 GitHub 贡献图：
+ *   - 列 = 周（grid-template-columns: repeat(53, 12px)，列间用 gap 控制）
+ *   - 月份标签放在该月首列、允许向右溢出（white-space: nowrap），
+ *     而非给每个标签固定宽度 —— 避免「X月」这种双字标签塞不下而重叠
+ *   - 星期标签 + 主体共用同一套列轨道，保证标签行与格子严格对齐
  */
 
 interface Props {
@@ -14,6 +20,9 @@ interface Props {
 }
 
 const WEEKDAY_LABELS = ['', '一', '', '三', '', '五', ''] as const;
+const CELL = 12; // 每格 12px（h-3 w-3）
+const GAP = 3; // 列/行间距 3px
+const COL = CELL + GAP; // 一个列轨道占 15px
 
 /** 按计数分 4 档着色 */
 function levelClass(count: number): string {
@@ -29,6 +38,10 @@ function cellTitle(cell: DayCell): string {
 
 export default function Heatmap({ yearData }: Props) {
   const { weeks, monthLabels, total, year } = yearData;
+  const weekCount = weeks.length;
+  const labelColWidth = 24; // 星期标签列宽度（留出双字格 + 间距）
+  // 主体网格列模板：53 个 12px 轨道，gap 由容器 gap 控制
+  const gridTemplate = `repeat(${weekCount}, ${CELL}px)`;
 
   return (
     <div>
@@ -38,46 +51,84 @@ export default function Heatmap({ yearData }: Props) {
       </div>
 
       <div className="overflow-x-auto pb-2">
-        <div className="inline-block min-w-full">
-          {/* 月份标签行：与下方网格列对齐 */}
+        <div style={{ width: 'fit-content' }}>
+          {/* 月份标签行：左侧留出星期列宽度对齐主体 */}
           <div
-            className="mb-1 flex text-xs text-text-muted"
-            style={{ paddingLeft: '1.5rem' }}
+            className="mb-1 text-xs text-text-muted"
+            style={{
+              display: 'grid',
+              gridTemplateColumns: gridTemplate,
+              columnGap: `${GAP}px`,
+              marginLeft: `${labelColWidth}px`,
+              height: '1em',
+            }}
           >
             {monthLabels.map((label, i) => (
               <div
                 key={i}
-                className="flex-shrink-0 text-left"
-                style={{ width: '14px', height: '1em', marginRight: '0' }}
+                style={{
+                  gridColumnStart: i + 1,
+                  whiteSpace: 'nowrap',
+                  lineHeight: '1em',
+                  height: '1em',
+                  overflow: 'visible',
+                }}
               >
                 {label}
               </div>
             ))}
           </div>
 
-          <div className="flex gap-1">
+          <div className="flex">
             {/* 星期标签列 */}
-            <div className="mr-1 flex flex-col gap-[2px] text-[10px] leading-[12px] text-text-muted">
+            <div
+              className="mr-[3px] text-[10px] text-text-muted"
+              style={{
+                display: 'grid',
+                gridTemplateRows: `repeat(7, ${CELL}px)`,
+                rowGap: `${GAP}px`,
+                width: `${labelColWidth - GAP}px`,
+              }}
+            >
               {WEEKDAY_LABELS.map((d, i) => (
-                <div key={i} className="h-3 w-3 text-right">
+                <div
+                  key={i}
+                  style={{
+                    height: `${CELL}px`,
+                    lineHeight: `${CELL}px`,
+                    textAlign: 'right',
+                  }}
+                >
                   {d}
                 </div>
               ))}
             </div>
 
-            {/* 主体：每列一周 × 7 行 */}
-            <div className="flex gap-[2px]">
-              {weeks.map((week, col) => (
-                <div key={col} className="flex flex-col gap-[2px]">
-                  {week.map((cell, row) => (
-                    <div
-                      key={row}
-                      title={cellTitle(cell)}
-                      className={`h-3 w-3 rounded-sm ${levelClass(cell.count)}`}
-                    />
-                  ))}
-                </div>
-              ))}
+            {/* 主体：53 列 × 7 行 */}
+            <div
+              style={{
+                display: 'grid',
+                gridTemplateColumns: gridTemplate,
+                gridTemplateRows: `repeat(7, ${CELL}px)`,
+                columnGap: `${GAP}px`,
+                rowGap: `${GAP}px`,
+              }}
+            >
+              {weeks.map((week, col) =>
+                week.map((cell, row) => (
+                  <div
+                    key={`${col}-${row}`}
+                    title={cellTitle(cell)}
+                    style={{
+                      gridColumnStart: col + 1,
+                      gridRowStart: row + 1,
+                      width: `${CELL}px`,
+                      height: `${CELL}px`,
+                    }}
+                    className={`rounded-sm ${levelClass(cell.count)}`}
+                  />
+                )),
+              )}
             </div>
           </div>
 
