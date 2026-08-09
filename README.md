@@ -116,6 +116,26 @@ description: 简介
 
 > 内容源是**独立私密仓库**：`pnpm dev` / `pnpm build` 前的 `predev` / `prebuild` 钩子会执行 `scripts/sync-content.mjs`，按上述变量 clone/pull 到 `.content-private/`（被 `.gitignore` 忽略）。这样公开主仓库不含任何文章原文，clone 出来也看不到私密内容。生产环境把这两个变量配在 Vercel 项目的 Settings → Environment Variables。
 
+## 日常工作流
+
+内容与代码分居两个仓库，日常改动按**目标**走两条不同路径：
+
+**写 / 改文章、标签**（→ 私密内容仓库 `special-obstacle-blog-content`）
+
+1. 在内容仓库的工作区（本地 clone，如 `D:\Codebase\special-obstacle-blog-content`）改 `posts/*.md` 或 `tags/*.yml`。
+2. `git add` + `git commit` + `git push` 到私密内容仓库（用你账号的 SSH key / PAT 鉴权，与主仓库的只读 PAT 无关）。
+3. 回主仓库跑 `pnpm dev` 预览 —— `predev` 钩子会自动 `git pull` 最新内容到 `.content-private/`。
+4. 确认无误即完成。**内容改动不进主仓库**，线上由 Vercel 下次构建时自动拉取。
+   - 想让线上立即更新：在主仓库推一个触发提交，或在 Vercel 点 Redeploy。
+
+**改代码 / schema / 配置 / 文档**（→ 主仓库 `special-obstacle-blog`）
+
+1. 在主仓库改（schema 在 `src/content.config.ts`，文档在 `docs/`、`README.md`、`AGENTS.md`）。
+2. 直接在 `main` 分支 `git commit`（中文约定式）+ `git push`。
+3. Vercel 监听 `main`，push 后自动触发部署；构建前 `prebuild` 钩子会拉取最新内容。
+
+> 详细的新建标签 / 新建文章 / 绑定标签的操作步骤见 [`docs/content-guide.md`](docs/content-guide.md)。
+
 ## 开发进度
 
 - ✅ 阶段 1（MVP）：脚手架、数据模型、可见性系统、鉴权基建、首页/列表/详情、暗色模式
