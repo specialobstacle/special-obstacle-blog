@@ -2,6 +2,7 @@
 import { render } from 'astro:content';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import Toc from '../../components/Toc.astro';
+import MobileToc from '../../components/MobileToc.astro';
 import {
   getVisiblePost,
   type PostEntry,
@@ -50,6 +51,9 @@ const dateStr = published.toLocaleDateString('zh-CN', {
       </div>
       <h1 class="text-3xl font-bold leading-tight">{title}</h1>
     </header>
+
+    {/* 移动端目录：竖线进度条式，lg 起隐藏 */}
+    <MobileToc headings={headings} />
 
     <div class="grid gap-10 lg:grid-cols-[1fr_220px]">
       {/* 正文 */}

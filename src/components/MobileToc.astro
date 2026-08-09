@@ -1,0 +1,130 @@
+---
+import type { MarkdownHeading } from 'astro';
+
+interface Props {
+  headings: MarkdownHeading[];
+}
+
+const { headings } = Astro.props;
+// 与右侧桌面目录一致：只列二级标题，点击直接跳转
+const h2 = headings.filter((h) => h.depth === 2);
+---
+
+{
+  h2.length > 0 && (
+    <nav
+      class="mobile-toc lg:hidden fixed right-3 top-1/2 z-20 -translate-y-1/2"
+      aria-label="文章目录"
+    >
+      <ul class="flex flex-col items-end gap-2.5">
+        {h2.map((h) => (
+          <li>
+            <a
+              href={`#${h.slug}`}
+              data-target={h.slug}
+              class="block py-1"
+              aria-label={h.text}
+              title={h.text}
+            >
+              <span class="bar block h-[2px] w-5 rounded-full bg-text-muted/40 transition-all duration-200" />
+            </a>
+          </li>
+        ))}
+      </ul>
+    </nav>
+  )
+}
+
+<style>
+  /* 高亮当前章节：横线变长 + 主题色（暗色自动跟随 token） */
+  .mobile-toc a.active .bar {
+    width: 2rem;
+    background-color: var(--color-primary);
+  }
+</style>
+
+{/* scroll spy：原生 scroll 监听，无 React 依赖，沿用 Header.astro 的 inline IIFE 范式 */}
+<script is:inline>
+  (function () {
+    function init() {
+    var nav = document.querySelector('.mobile-toc');
+    if (!nav) return;
+
+    var links = nav.querySelectorAll('a[data-target]');
+    if (!links.length) return;
+
+    // slug → 标题元素 / 链接元素
+    var targets = [];
+    var linkBySlug = {};
+    for (var i = 0; i < links.length; i++) {
+      var slug = links[i].getAttribute('data-target');
+      linkBySlug[slug] = links[i];
+      var heading = document.getElementById(slug);
+      if (heading) targets.push(heading);
+    }
+    if (!targets.length) return;
+
+    var activeSlug = null;
+
+    function setActive(slug) {
+      if (slug === activeSlug) return;
+      activeSlug = slug;
+      for (var key in linkBySlug) {
+        if (Object.prototype.hasOwnProperty.call(linkBySlug, key)) {
+          linkBySlug[key].classList.toggle('active', key === slug);
+        }
+      }
+    }
+
+    // scroll spy：取「顶部已越过参考线的最后一个标题」。
+    // 参考线 = sticky header 下方一点（避免标题紧贴 header 时来回闪烁）。
+    // 滚到页面底部时，强制高亮最后一个标题（否则末尾章节因内容不足可能永远到不了参考线）。
+    function update() {
+      var OFFSET = 100; // header(56) + 缓冲
+      var scrollBottom = window.scrollY + window.innerHeight;
+      var docHeight = document.documentElement.scrollHeight;
+
+      if (scrollBottom > docHeight - 4) {
+        setActive(targets[targets.length - 1].id);
+        return;
+      }
+
+      var current = targets[0].id; // 默认第一个（页面顶部时）
+      for (var i = 0; i < targets.length; i++) {
+        var top = targets[i].getBoundingClientRect().top + window.scrollY;
+        if (top <= window.scrollY + OFFSET) {
+          current = targets[i].id;
+        } else {
+          break;
+        }
+      }
+      setActive(current);
+    }
+
+    var ticking = false;
+    window.addEventListener(
+      'scroll',
+      function () {
+        if (ticking) return;
+        ticking = true;
+        requestAnimationFrame(function () {
+          update();
+          ticking = false;
+        });
+      },
+      { passive: true }
+    );
+
+    // 初始化 + 字体/图片加载后位置变化时重算
+    update();
+    window.addEventListener('load', update);
+    }
+
+    // 确保 DOM 就绪后再初始化（is:inline 脚本可能在 nav 渲染前执行）
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', init);
+    } else {
+      init();
+    }
+  })();
+</script>

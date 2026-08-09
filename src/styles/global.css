@@ -79,6 +79,11 @@ body {
 .prose h3 {
   font-size: 1.2em;
 }
+/* 锚点跳转偏移：避免目标标题被顶部 sticky header（h-14 ≈ 3.5rem）遮挡 */
+.prose h2,
+.prose h3 {
+  scroll-margin-top: 5rem;
+}
 .prose p,
 .prose ul,
 .prose ol,
