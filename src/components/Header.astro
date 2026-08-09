@@ -1,5 +1,6 @@
 ---
 import { NAV_ITEMS } from '../lib/constants';
+import SearchBox from './SearchBox.tsx';
 import ThemeToggle from './ThemeToggle.tsx';
 
 const { pathname } = Astro.url;
@@ -51,6 +52,7 @@ function isActive(href: string): boolean {
     </nav>
 
     <div class="flex items-center gap-2">
+      <SearchBox client:idle />
       {isAdmin && (
         <span
           title="当前为管理员视图"
