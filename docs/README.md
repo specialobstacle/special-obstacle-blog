@@ -6,6 +6,7 @@
 
 | 文件 | 用途 | 类型 |
 |------|------|------|
+| [`content-guide.md`](./content-guide.md) | 写作操作流程：创建文章、创建标签、绑定标签、易踩坑与发布步骤 | 长期文档（写作） |
 | [`vercel-deploy.md`](./vercel-deploy.md) | Vercel 部署、环境变量配置、Node runtime、线上验证清单、故障排查 | 长期文档（运维） |
 | [`next-session-prompt.md`](./next-session-prompt.md) | 滚动更新的「新会话接续提示词」，记录项目背景、当前进度与下一阶段目标 | 过程文件 |
 | [`archive/stage-3-prompt.md`](./archive/stage-3-prompt.md) | 阶段 3 实施提示词（部署 Vercel + 线上密码门） | 历史提示词（已完成） |

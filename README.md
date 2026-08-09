@@ -81,6 +81,8 @@ private: false      # 私密标签绑定的文章仅管理员可见
 description: 简介
 ```
 
+> 实际动手写文章 / 建标签 / 绑定的逐步流程与易踩坑，见 [`docs/content-guide.md`](./docs/content-guide.md)。
+
 ## 权限模型
 
 - 访客：看不到 `draft`（生产）、`private: true` 的文章，也看不到任何绑定了 private 标签的文章——不出现在列表、不可访问 URL、不被搜索命中。
