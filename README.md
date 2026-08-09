@@ -102,6 +102,7 @@ description: 简介
 | `pnpm astro check` | TypeScript + Astro 类型检查 |
 | `set -a; . ./.env; set +a` | 加载 .env 文件全部环境变量 |
 | `pnpm dev --host` | 启动本地开发服务器并暴露 host |
+| `pnpm exec astro dev stop` | 停止本地服务器 |
 
 ## 环境变量
 
