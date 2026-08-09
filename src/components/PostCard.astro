@@ -1,11 +1,7 @@
 ---
 import type { PostEntry } from '../lib/visibility';
-import {
-  DOMAIN_LABELS,
-  CATEGORY_LABELS,
-  type Domain,
-  type Category,
-} from '../lib/constants';
+import { getVisibleTags } from '../lib/visibility';
+import { CATEGORY_LABELS, type Category } from '../lib/constants';
 
 interface Props {
   post: PostEntry;
@@ -13,8 +9,13 @@ interface Props {
 }
 
 const { post, showAdminBadge = false } = Astro.props;
-const { title, published, updated, domain, category, private: isPrivate, draft } =
+const { title, published, updated, category, tags, private: isPrivate, draft } =
   post.data;
+
+// slug → 中文显示名（按当前 viewer 可见性过滤，避免渲染点了会 404 的私密标签）
+const { isAdmin } = Astro.locals;
+const visibleTags = await getVisibleTags(isAdmin);
+const tagNameById = new Map(visibleTags.map(({ tag }) => [tag.id, tag.data.name]));
 
 // 「最近修改日期」：有 updated 用 updated，否则回退 published
 const date = updated ?? published;
@@ -54,7 +55,20 @@ const dateStr = date.toLocaleDateString('zh-CN', {
   </div>
 
   <div class="mt-1 flex items-center gap-x-2 text-xs text-text-muted">
-    <span>#{DOMAIN_LABELS[domain as Domain]}</span>
-    <span>#{CATEGORY_LABELS[category as Category]}</span>
+    <div class="flex min-w-0 flex-wrap items-center gap-x-2">
+      {tags.length > 0 && tags.map((slug) => {
+        const name = tagNameById.get(slug);
+        if (!name) return null;
+        return (
+          <a
+            href={`/tags/${slug}`}
+            class="transition hover:text-primary"
+          >
+            #{name}
+          </a>
+        );
+      })}
+    </div>
+    <span class="ml-auto shrink-0">{CATEGORY_LABELS[category as Category]}</span>
   </div>
 </article>
