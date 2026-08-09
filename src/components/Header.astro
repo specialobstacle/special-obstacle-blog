@@ -15,7 +15,7 @@ function isActive(href: string): boolean {
 
 <header class="sticky top-0 z-40 border-b border-border bg-bg/85 backdrop-blur">
   <div class="mx-auto flex h-14 max-w-5xl items-center gap-2 px-4">
-    <a href="/" class="mr-4 font-semibold text-text">My Blog</a>
+    <a href="/" class="mr-4 font-semibold text-text">Special Obstacle's Blog</a>
 
     <nav class="flex flex-1 items-center gap-1 text-sm">
       {NAV_ITEMS.map((item) => (
@@ -53,15 +53,8 @@ function isActive(href: string): boolean {
 
     <div class="flex items-center gap-2">
       <SearchBox client:idle />
-      {isAdmin && (
-        <span
-          title="当前为管理员视图"
-          class="rounded-full bg-primary/15 px-2 py-0.5 text-xs text-primary"
-        >
-          admin
-        </span>
-      )}
       {/* 登录态入口：运行时判断，不属于静态导航，故直接改 Header 而非 NAV_ITEMS */}
+      <ThemeToggle client:load />
       {isAdmin ? (
         <a
           href="/logout"
@@ -79,7 +72,14 @@ function isActive(href: string): boolean {
           登录
         </a>
       )}
-      <ThemeToggle client:load />
+      {isAdmin && (
+        <span
+          title="当前为管理员视图"
+          class="rounded-full bg-primary/15 px-2 py-0.5 text-xs text-primary"
+        >
+          admin
+        </span>
+      )}
     </div>
   </div>
 </header>
