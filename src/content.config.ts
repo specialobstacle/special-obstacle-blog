@@ -11,10 +11,15 @@ import { DOMAINS, CATEGORIES } from './lib/constants';
  *
  * 注意：tags 与 posts 是两个独立集合。posts.frontmatter.tags
  * 引用的是 tag 的 slug（文件名，去掉扩展名），运行时再 join。
+ *
+ * 内容源外置：Markdown / YAML 文件不在本仓库，而在独立的私密内容仓库里。
+ * predev/prebuild 钩子（scripts/sync-content.mjs）会把它 clone 到 .content-private/。
+ * 公开仓库 clone 出来不含任何文章原文。
  */
+const CONTENT_BASE = './.content-private';
 
 const posts = defineCollection({
-  loader: glob({ pattern: '**/*.md', base: './src/content/posts' }),
+  loader: glob({ pattern: '**/*.md', base: `${CONTENT_BASE}/posts` }),
   schema: z.object({
     /** 标题（必填） */
     title: z.string(),
@@ -40,7 +45,7 @@ const posts = defineCollection({
 });
 
 const tags = defineCollection({
-  loader: glob({ pattern: '**/*.{yml,yaml}', base: './src/content/tags' }),
+  loader: glob({ pattern: '**/*.{yml,yaml}', base: `${CONTENT_BASE}/tags` }),
   schema: z.object({
     /** 显示名 */
     name: z.string(),

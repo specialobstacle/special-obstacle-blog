@@ -35,3 +35,6 @@ Thumbs.db
 
 # ZCode 客户端会话/缓存目录
 .zcode/
+
+# 私密内容：从独立私密仓库 clone（scripts/sync-content.mjs），不进主仓库
+.content-private/
