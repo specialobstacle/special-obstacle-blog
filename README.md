@@ -114,7 +114,7 @@ description: 简介
 - ✅ 阶段 2：分类页 / 标签集合页 / 标签详情页 / About / Resume / 404
 - ✅ 阶段 3：部署 Vercel + 线上密码门（`/login`、`/logout`、速率限制、CSRF；见 `docs/vercel-deploy.md`）
 - ✅ 阶段 4：全站搜索（MiniSearch）、单篇导出 Markdown、About 页写作频率热力图
-- ⏳ 阶段 5：完善 `docs/` 与 `AGENTS.md`
+- ✅ 阶段 5：完善 `docs/`（导航索引 + 归档历史提示词）、精简 `AGENTS.md`（补 commit 规范与可见性约束）、修正 README 与代码不符之处
 
 ## 协作约定
 
