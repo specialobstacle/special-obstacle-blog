@@ -9,7 +9,7 @@
 | 框架 | Astro 7+（SSR / 混合渲染） |
 | UI 岛屿 | React 19（仅用于交互组件） |
 | 样式 | Tailwind CSS v4 + CSS 变量（暗色模式无 FOUC） |
-| 内容 | Git-based：文章是 `src/content/posts/*.md`，标签是 `src/content/tags/*.yml` |
+| 内容 | Git-based：文章/标签 Markdown 存在**独立的私密内容仓库**，构建前由 `scripts/sync-content.mjs` clone 到 `.content-private/`（不入主仓库） |
 | 鉴权 | Astro middleware + HMAC token cookie，单管理员 |
 | 部署 | Vercel（`@astrojs/vercel` adapter） |
 | 包管理 | pnpm |
@@ -20,9 +20,7 @@
 src/
 ├── content.config.ts        # Content Collections schema（posts + tags，zod 校验）
 ├── env.d.ts                 # App.Locals.isAdmin 等运行时类型声明
-├── content/
-│   ├── posts/*.md           # 文章（frontmatter 见下方）
-│   └── tags/*.yml           # 标签（含 private 标志）
+├── content/                 # 仅保留 schema 占位；文章/标签源在外置私密仓库
 ├── lib/
 │   ├── constants.ts         # 领域/类别/导航枚举（单一来源）
 │   ├── visibility.ts        # 可见性过滤的单一事实源（权限命脉）
@@ -50,6 +48,9 @@ src/
 │   └── tags/
 │       ├── index.astro      # 标签集合页
 │       └── [tag].astro      # 标签详情页
+scripts/
+└── sync-content.mjs         # predev/prebuild 钩子：clone/pull 私密内容仓库到 .content-private/
+.content-private/            # （gitignore）私密内容 clone 目标，不进主仓库
 docs/                        # 文档（见 docs/README.md 导航）
 AGENTS.md                    # AI 协作约定（commit 规范、可见性约束、dev server）
 ```
@@ -110,6 +111,10 @@ description: 简介
 
 - `ADMIN_PASSWORD`：管理员登录密码
 - `JWT_SECRET`：token 签名密钥（用 `openssl rand -hex 32` 生成）
+- `CONTENT_REPO_URL`：私密内容仓库地址（文章/标签 Markdown 的源），如 `https://github.com/your-name/blog-content.git`
+- `CONTENT_REPO_TOKEN`：访问私密内容仓库的 GitHub PAT（fine-grained，仅 Contents: Read）。留空则直接用 `CONTENT_REPO_URL`（依赖本机 SSH/git 凭据）
+
+> 内容源是**独立私密仓库**：`pnpm dev` / `pnpm build` 前的 `predev` / `prebuild` 钩子会执行 `scripts/sync-content.mjs`，按上述变量 clone/pull 到 `.content-private/`（被 `.gitignore` 忽略）。这样公开主仓库不含任何文章原文，clone 出来也看不到私密内容。生产环境把这两个变量配在 Vercel 项目的 Settings → Environment Variables。
 
 ## 开发进度
 

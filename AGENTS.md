@@ -18,6 +18,16 @@
 
 新增任何会输出文章内容的页面或端点时，**第一件事**是接上 `filterVisiblePosts` / `getVisiblePost`。
 
+## 内容源（外置私密仓库）
+
+**文章/标签 Markdown 不在本仓库**，而在独立的私密内容仓库里（结构：`posts/*.md` + `tags/*.yml`）。
+
+- `predev` / `prebuild` 钩子（`scripts/sync-content.mjs`）会按 `CONTENT_REPO_URL` / `CONTENT_REPO_TOKEN` 把它 clone/pull 到 `.content-private/`（被 `.gitignore` 忽略，不进主仓库）。
+- `content.config.ts` 的两个 collection 的 `base` 指向 `.content-private/posts` 与 `.content-private/tags`。
+- 改 schema（`content.config.ts`）在主仓库；写/改文章内容去**私密内容仓库**。
+- 本地首次跑 `pnpm dev` 前，`.env` 里必须有 `CONTENT_REPO_URL`（+ 可选 `CONTENT_REPO_TOKEN`），否则钩子报错退出、dev 起不来。
+- clone 拉不到内容必须**硬失败**（脚本 exit 非 0），绝不能静默构建空站上线。
+
 ## Development
 
 ### Start the dev server（必须先注入环境变量）

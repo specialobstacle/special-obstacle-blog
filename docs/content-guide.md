@@ -2,6 +2,8 @@
 
 本篇讲**操作流程**：怎么一步步新增标签、新增文章、把标签绑到文章上。字段定义与权限模型的完整说明见根 [`README.md`](../README.md) 的「数据模型」「权限模型」，此处不重复 schema，只讲怎么做、有哪些坑。
 
+> 文章/标签 Markdown **不在主仓库**，而在独立的**私密内容仓库**里（结构：`posts/*.md` + `tags/*.yml`）。`pnpm dev` / `pnpm build` 前的钩子会把它 clone 到 `.content-private/`，content collection 从那里读取。本指南里写「`posts/`」「`tags/`」时，指的是私密内容仓库里的对应目录。
+
 > 四条核心规则先记住：
 > 1. 标签文件名（去掉 `.yml`）= 标签 **slug**；文章 frontmatter 的 `tags:` 引用的就是这个 slug。
 > 2. 文章文件名（去掉 `.md`）= 文章 **slug** = 详情页 URL（`/posts/<文件名>`）。
@@ -12,12 +14,12 @@
 
 ## 一、创建标签
 
-在 `src/content/tags/` 下新建 `.yml` 文件，**文件名即 slug**。
+在私密内容仓库的 `tags/` 下新建 `.yml` 文件，**文件名即 slug**。
 
 例如新建 `rust.yml`：
 
 ```yaml
-# src/content/tags/rust.yml
+# tags/rust.yml （私密内容仓库）
 name: Rust
 description: Rust 语言与系统编程
 ```
@@ -34,9 +36,9 @@ description: Rust 语言与系统编程
 
 ## 二、创建文章
 
-在 `src/content/posts/` 下新建 `.md` 文件，**文件名即 slug，即 URL**。
+在私密内容仓库的 `posts/` 下新建 `.md` 文件，**文件名即 slug，即 URL**。
 
-示例（参考 `src/content/posts/typescript-tips.md`）：
+示例（参考 `posts/typescript-tips.md`）：
 
 ```markdown
 ---
@@ -65,7 +67,7 @@ frontmatter 字段速查（schema 在 `src\content.config.ts`，写错枚举值 
 | `category` | ✅ | `article` / `diary` / `resume` / `page` |
 | `domain` | ✅ | `tech` / `life` / `career` / `other`（对应导航 Tech/Life/Career，`other` 为兜底） |
 | `published` | ✅ | 日期，如 `2026-08-09`（用于排序与热力图） |
-| `tags` | 可选 | 标签 slug 数组，引用 `src/content/tags/` 下的文件名 |
+| `tags` | 可选 | 标签 slug 数组，引用私密内容仓库 `tags/` 下的文件名 |
 | `excerpt` | 可选 | 摘要，列表页与搜索索引使用 |
 | `updated` | 可选 | 最后更新日期 |
 | `draft` | 可选，默认 `false` | `true` 时 dev 可见、生产构建排除 |
@@ -105,12 +107,12 @@ public/
 
 ## 三、把标签绑定到文章
 
-在文章 frontmatter 的 `tags:` 下加上**标签的 slug**（即 `src/content/tags/` 下那个 `.yml` 的文件名，不带扩展名）：
+在文章 frontmatter 的 `tags:` 下加上**标签的 slug**（即私密内容仓库 `tags/` 下那个 `.yml` 的文件名，不带扩展名）：
 
 ```yaml
 tags:
-  - rust        # 对应 src/content/tags/rust.yml
-  - frontend    # 对应 src/content/tags/frontend.yml
+  - rust        # 对应 tags/rust.yml
+  - frontend    # 对应 tags/frontend.yml
 ```
 
 > 注意引用的是**文件名（slug）**，不是 `name`（如「前端」）。slug 写错不会报错，但该标签不会在文章页显示。
@@ -119,7 +121,7 @@ tags:
 
 ## 四、易踩坑清单
 
-1. **先建标签再建文章**：文章引用的 slug 在 `src/content/tags/` 找不到对应文件时不会报错，但标签渲染不出来。新建文章前先确认引用的标签都已存在。
+1. **先建标签再建文章**：文章引用的 slug 在 `tags/` 找不到对应文件时不会报错，但标签渲染不出来。新建文章前先确认引用的标签都已存在。
 
 2. **私密文章的两种写法**（可叠加，效果相同）：
    - 文章 frontmatter 直接写 `private: true`；
@@ -139,12 +141,13 @@ tags:
 
 ## 五、发布流程
 
-1. 在 `src/content/tags/` 准备好需要的标签（若已存在可跳过）。
-2. 在 `src/content/posts/` 新建 `.md` 文件，填好 frontmatter 和正文。
+1. 在私密内容仓库的 `tags/` 准备好需要的标签（若已存在可跳过）。
+2. 在私密内容仓库的 `posts/` 新建 `.md` 文件，填好 frontmatter 和正文，**提交并 push 到私密内容仓库**。
 3. 启动 dev server 预览（注意先注入环境变量，见 `AGENTS.md` 的 Development 段）：
    ```bash
    set -a; . ./.env; set +a
    astro dev --background
    ```
+   首次启动会自动 clone 私密内容仓库到 `.content-private/`；后续每次 `pnpm dev` 会自动 pull 最新内容。
 4. 访问 `/posts/<slug>` 确认渲染、标签、可见性符合预期。
-5. 提交：`git add` + 中文约定式 commit（如 `docs: 新增 Rust 所有权入门` 或 `feat(post): ...`）。
+5. 内容改动提交到**私密内容仓库**（那里是内容源）。主仓库只在改代码/schema/配置时才提交。
