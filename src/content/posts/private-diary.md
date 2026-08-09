@@ -9,8 +9,6 @@ tags:
 private: true
 ---
 
-# 一篇私密日记（测试用）
-
 这篇文章绑定了 `private-thoughts` 标签（该标签 private=true），
 因此对访客完全不可见——不出现在列表、不可访问 URL、不被搜索命中。
 
