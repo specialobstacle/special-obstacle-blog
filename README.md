@@ -19,24 +19,39 @@
 ```text
 src/
 ├── content.config.ts        # Content Collections schema（posts + tags，zod 校验）
+├── env.d.ts                 # App.Locals.isAdmin 等运行时类型声明
 ├── content/
 │   ├── posts/*.md           # 文章（frontmatter 见下方）
 │   └── tags/*.yml           # 标签（含 private 标志）
 ├── lib/
 │   ├── constants.ts         # 领域/类别/导航枚举（单一来源）
 │   ├── visibility.ts        # 可见性过滤的单一事实源（权限命脉）
-│   └── auth.ts              # 密码校验 + HMAC token
+│   ├── auth.ts              # 密码校验 + HMAC token
+│   ├── csrf.ts              # 同源校验（防 CSRF）
+│   ├── rateLimit.ts         # 登录速率限制（失败计数 + 锁定窗口）
+│   └── heatmap.ts           # About 页热力图聚合（内部调 filterVisiblePosts）
 ├── middleware.ts            # 每请求注入 Astro.locals.isAdmin
 ├── layouts/BaseLayout.astro # 含暗色模式阻塞脚本
-├── components/              # Header / PostCard / PostList / Toc / ThemeToggle
+├── components/              # Header / PostCard / PostList / PostListPage / Toc / ThemeToggle / SearchBox / Heatmap
 ├── pages/
 │   ├── index.astro          # 首页
-│   └── posts/
-│       ├── index.astro      # 文章列表
-│       └── [slug].astro     # 文章详情（右侧 TOC，二级标题跳转）
-└── styles/global.css        # 设计 token + prose 排版
-docs/                        # 搭建/部署/运维命令记录
-AGENTS.md                    # AI 协作约定（ZCode 等）
+│   ├── about.astro          # About（含写作频率热力图）
+│   ├── resume.astro         # 简历
+│   ├── login.astro          # 管理员登录
+│   ├── logout.astro         # 登出（清 cookie 后回首页）
+│   ├── 404.astro            # 404 页
+│   ├── api/search.json.ts   # 搜索索引端点（经 filterVisiblePosts）
+│   ├── posts/
+│   │   ├── index.astro      # 文章列表
+│   │   ├── [slug].astro     # 文章详情（右侧 TOC，二级标题跳转）
+│   │   ├── [slug].md.ts     # 单篇 Markdown 导出端点（经 getVisiblePost）
+│   │   ├── _domain.ts       # 分类页共享逻辑
+│   │   └── {tech,life,career,other}.astro  # 四个领域分类页
+│   └── tags/
+│       ├── index.astro      # 标签集合页
+│       └── [tag].astro      # 标签详情页
+docs/                        # 文档（见 docs/README.md 导航）
+AGENTS.md                    # AI 协作约定（commit 规范、可见性约束、dev server）
 ```
 
 ## 数据模型
@@ -49,6 +64,8 @@ title: 标题
 category: article | diary | resume | page   # 类别
 domain: tech | life | career | other        # 领域
 published: 2026-08-08
+updated: 2026-08-09                           # 可选，最后更新日期
+excerpt: 可选摘要                             # 可选，搜索索引与列表展示用
 tags: [astro, frontend]                      # 引用 tag slug
 draft: false                                  # dev 可见，build 排除
 private: false                                # 显式私密（也可由 private 标签间接判定）
@@ -81,6 +98,8 @@ description: 简介
 | `pnpm build` | 构建生产版本到 `./dist/` |
 | `pnpm preview` | 本地预览构建产物 |
 | `pnpm astro check` | TypeScript + Astro 类型检查 |
+| `set -a; . ./.env; set +a` | 加载 .env 文件全部环境变量 |
+| `pnpm dev --host` | 启动本地开发服务器并暴露 host |
 
 ## 环境变量
 
