@@ -15,9 +15,27 @@ function isActive(href: string): boolean {
 
 <header class="sticky top-0 z-40 border-b border-border bg-bg/85 backdrop-blur">
   <div class="mx-auto flex h-14 max-w-5xl items-center gap-2 px-4">
-    <a href="/" class="mr-4 font-semibold text-text">Special Obstacle's Blog</a>
+    {/* 移动端汉堡按钮：sm: 起隐藏（桌面用水平 nav） */}
+    <button
+      id="menu-toggle"
+      type="button"
+      class="flex h-9 w-9 shrink-0 items-center justify-center rounded-md text-xl text-text-muted transition hover:bg-surface hover:text-text sm:hidden"
+      aria-label="切换菜单"
+      aria-expanded="false"
+      aria-controls="mobile-menu"
+    >☰</button>
 
-    <nav class="flex flex-1 items-center gap-1 text-sm">
+    <a
+      href="/"
+      class="mr-4 shrink-0 whitespace-nowrap font-semibold text-text"
+      title="Special Obstacle's Blog"
+    >
+      {/* 窄屏短称防溢出，sm: 起显示全称 */}
+      <span class="sm:hidden">SO&apos;s Blog</span>
+      <span class="hidden sm:inline">Special Obstacle&apos;s Blog</span>
+    </a>
+
+    <nav class="hidden flex-1 items-center gap-1 text-sm sm:flex">
       {NAV_ITEMS.map((item) => (
         <div class="group relative">
           <a
@@ -51,7 +69,7 @@ function isActive(href: string): boolean {
       ))}
     </nav>
 
-    <div class="flex items-center gap-2">
+    <div class="ml-auto flex shrink-0 items-center gap-2">
       <SearchBox client:idle />
       {/* 登录态入口：运行时判断，不属于静态导航，故直接改 Header 而非 NAV_ITEMS */}
       <ThemeToggle client:load />
@@ -82,4 +100,68 @@ function isActive(href: string): boolean {
       )}
     </div>
   </div>
+
+  {/* 移动端抽屉菜单：sm: 起隐藏，默认 hidden 由 JS 切换显隐 */}
+  <nav
+    id="mobile-menu"
+    class="hidden border-t border-border bg-bg px-4 py-2 sm:hidden"
+  >
+    {NAV_ITEMS.map((item) => (
+      <div class="border-b border-border/60 last:border-0">
+        <a
+          href={item.href}
+          class:list={[
+            'block rounded-md px-3 py-2 text-sm transition',
+            isActive(item.href)
+              ? 'bg-surface text-primary'
+              : 'text-text hover:bg-surface hover:text-text',
+          ]}
+        >
+          {item.label}
+        </a>
+        {/* Posts 子项直接展开在主项下方（移动端无 hover，避免折叠态不可达） */}
+        {'children' in item && item.children && (
+          <div class="pb-1">
+            {item.children.map((child) => (
+              <a
+                href={child.href}
+                class:list={[
+                  'block rounded-md py-1.5 pl-6 pr-3 text-sm transition',
+                  isActive(child.href)
+                    ? 'bg-surface text-primary'
+                    : 'text-text-muted hover:bg-surface hover:text-text',
+                ]}
+              >
+                {child.label}
+              </a>
+            ))}
+          </div>
+        )}
+      </div>
+    ))}
+  </nav>
 </header>
+
+{/* 移动端菜单显隐：原生 JS，无需 React 岛屿 */}
+<script is:inline>
+  (function () {
+    var toggle = document.getElementById('menu-toggle');
+    var menu = document.getElementById('mobile-menu');
+    if (!toggle || !menu) return;
+
+    function setOpen(open) {
+      menu.classList.toggle('hidden', !open);
+      toggle.textContent = open ? '✕' : '☰';
+      toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+    }
+
+    toggle.addEventListener('click', function () {
+      setOpen(menu.classList.contains('hidden'));
+    });
+
+    // 点击任意菜单项跳转后自动收起
+    menu.addEventListener('click', function (e) {
+      if (e.target.closest('a')) setOpen(false);
+    });
+  })();
+</script>
