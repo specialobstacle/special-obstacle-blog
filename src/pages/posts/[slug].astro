@@ -62,5 +62,16 @@ const dateStr = published.toLocaleDateString('zh-CN', {
         <Toc headings={headings} />
       </aside>
     </div>
+
+    {/* 导出 Markdown：端点走 getVisiblePost 权限校验，私密文章对访客 404 */}
+    <div class="mt-12 flex justify-center">
+      <a
+        href={`/posts/${post.id}.md`}
+        download
+        class="inline-flex items-center gap-2 rounded-md border border-border px-4 py-2 text-sm text-text-muted transition hover:border-primary hover:text-primary"
+      >
+        ⬇ 导出 Markdown
+      </a>
+    </div>
   </article>
 </BaseLayout>
