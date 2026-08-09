@@ -2,6 +2,7 @@
 
 - commit message 用**中文**，约定式格式：`feat:` / `fix:` / `docs:` / `chore:` / `style:` / `refactor:`
 - 一个 commit 只做一件事；文档改动不混入代码改动（发现代码 bug 单独开 commit 修）
+- **直接在 `main` 分支上改代码并提交，不要为单个改动新建分支**；用完即弃的临时分支改完即删，保持仓库只有 `main`
 - 详见 README「协作约定」段，本文件为其「详见 AGENTS.md」的落脚点
 
 ## 可见性硬约束（最容易踩坑）
