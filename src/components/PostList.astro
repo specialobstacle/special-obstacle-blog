@@ -18,7 +18,7 @@ const {
 {posts.length === 0 ? (
   <p class="py-12 text-center text-text-muted">{emptyHint}</p>
 ) : (
-  <div class="grid gap-3">
+  <div class="grid gap-2">
     {posts.map((post) => (
       <PostCard post={post} showAdminBadge={showAdminBadges} />
     ))}
