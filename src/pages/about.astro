@@ -1,5 +1,13 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
+import Heatmap from '../components/Heatmap.tsx';
+import { getPostCountsByDate, fillYearGrid } from '../lib/heatmap';
+
+// 数据聚合走 filterVisiblePosts：私密文章对访客不计入
+const { isAdmin } = Astro.locals;
+const year = new Date().getFullYear();
+const counts = await getPostCountsByDate(isAdmin);
+const yearData = fillYearGrid(year, counts);
 ---
 
 <BaseLayout title="About">
@@ -17,14 +25,8 @@ import BaseLayout from '../layouts/BaseLayout.astro';
       支持私密标签与单管理员鉴权，部分内容只有我自己登录后才能看到。
     </p>
 
-    <h2>写作频率</h2>
-    {/* 阶段 4：此处渲染文章发布热力图（按 published 字段聚合）。
-        届时替换下方占位容器，数据源走 filterVisiblePosts(isAdmin)。 */}
-    <div
-      class="flex min-h-[200px] items-center justify-center rounded-lg border border-dashed border-border bg-surface text-sm text-text-muted"
-    >
-      热力图将在阶段 4 上线
-    </div>
+    <h2>写作频率 · {year}</h2>
+    <Heatmap client:visible yearData={yearData} />
 
     <h2>联系</h2>
     <p>
