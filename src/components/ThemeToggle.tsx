@@ -32,7 +32,7 @@ export default function ThemeToggle() {
     return (
       <button
         aria-label="切换主题"
-        className="h-9 w-9 rounded-md border border-border text-text"
+        className="flex h-9 w-9 items-center justify-center rounded-md border border-border bg-bg text-text"
       />
     );
   }
@@ -43,7 +43,7 @@ export default function ThemeToggle() {
       onClick={toggle}
       aria-label={isDark ? '切换到浅色' : '切换到深色'}
       title={isDark ? '切换到浅色' : '切换到深色'}
-      className="flex h-9 w-9 items-center justify-center rounded-md border border-border bg-surface text-text transition hover:border-primary hover:text-primary"
+      className="flex h-9 w-9 items-center justify-center rounded-md border border-border bg-bg text-text transition hover:border-primary hover:text-primary"
     >
       {isDark ? '☀️' : '🌙'}
     </button>
