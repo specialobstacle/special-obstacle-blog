@@ -74,6 +74,35 @@ frontmatter 字段速查（schema 在 `src\content.config.ts`，写错枚举值 
 
 ---
 
+## 附：正文插图
+
+文章里的图片统一放 `public/images/<文章 slug>/` 下，正文用**以 `/` 开头的绝对路径**引用。
+
+约定目录结构：
+
+```
+public/
+└── images/
+    └── typescript-tips/        ← 与文章同名，便于归属
+        ├── screenshot.png
+        └── diagram.svg
+```
+
+正文里这样写：
+
+```markdown
+![类型关系示意图](/images/typescript-tips/diagram.svg)
+```
+
+要点：
+
+1. **目录按文章 slug 命名**：一篇一个子目录，避免所有图片堆在一起难以归属。删文章时连同 `public/images/<slug>/` 一起删。
+2. **路径必须以 `/` 开头**：`/images/...` 指向 `public/` 根，dev 和生产环境都能直接访问。不要写相对路径（`./images/...` 或 `../...`），它们在 Markdown 导出端点（`src/pages/posts/[slug].md.ts`）里会失效。
+3. **尺寸自己控制好**：图片不走 Astro 的优化管线（不压缩、不转 WebP、不生成响应式尺寸），上传前自行压缩到合理体积。`.prose img` 已有 `max-width: 100%` 兜底，宽度不会撑爆正文容器。
+4. **远程图片**（图床、对象存储、GitHub raw 等）也可以直接用完整 URL 引用，但会留下对外部服务的依赖，且导出的 Markdown 里会保留这些外链——本仓库默认用本地 `public/images/`。
+
+---
+
 ## 三、把标签绑定到文章
 
 在文章 frontmatter 的 `tags:` 下加上**标签的 slug**（即 `src/content/tags/` 下那个 `.yml` 的文件名，不带扩展名）：
