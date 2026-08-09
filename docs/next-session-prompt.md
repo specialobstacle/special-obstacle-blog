@@ -26,7 +26,7 @@ Astro v7 SSR + React + Tailwind v4 + Vercel adapter 的个人博客，Git-based 
 - `AGENTS.md`（协作约定，尤其 dev server 用 background 模式）
 - `src/lib/visibility.ts`（权限核心，**所有列表/详情/搜索/导出/热力图必须经 `filterVisiblePosts(isAdmin)`**）
 - `src/lib/heatmap.ts`（阶段 4 新增：热力图聚合纯逻辑，可见性范式）
-- `docs/` 目录现有文档（`vercel-deploy.md`、`stage-3-prompt.md`、`stage-4-prompt.md`）
+- `docs/` 目录现有文档（见 [`docs/README.md`](./README.md) 导航：`vercel-deploy.md`、`archive/stage-3-prompt.md`、`archive/stage-4-prompt.md`）
 
 ## 阶段 5 目标
 

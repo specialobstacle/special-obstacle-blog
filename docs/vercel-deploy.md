@@ -73,10 +73,10 @@ node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 
 拿到 Vercel 分配的域名（如 `https://your-blog.vercel.app` 或自定义域名）后：
 
-1. 编辑 `astro.config.mjs`，把 `site: 'https://example.com'` 改为真实域名。
+1. 编辑 `astro.config.mjs`，把 `site` 改为真实域名。
 2. 提交并推送，触发重新部署。
 
-`site` 影响 sitemap 与 canonical URL，必须在拿到域名后改对。本仓库当前用占位值 `example.com`。
+`site` 影响 sitemap 与 canonical URL，必须在拿到域名后改对。本仓库当前已设为线上域名 `https://special-obstacle-blog.vercel.app`；若改用自定义域名，同步更新此值。
 
 ---
 
