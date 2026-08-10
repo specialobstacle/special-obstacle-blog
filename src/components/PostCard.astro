@@ -1,7 +1,7 @@
 ---
 import type { PostEntry } from '../lib/visibility';
 import { getVisibleTags } from '../lib/visibility';
-import { CATEGORY_LABELS, type Category } from '../lib/constants';
+import { DOMAIN_LABELS, type Domain } from '../lib/constants';
 
 interface Props {
   post: PostEntry;
@@ -9,7 +9,7 @@ interface Props {
 }
 
 const { post, showAdminBadge = false } = Astro.props;
-const { title, published, updated, category, tags, private: isPrivate, draft } =
+const { title, published, updated, domain, tags, private: isPrivate, draft } =
   post.data;
 
 // slug → 中文显示名（按当前 viewer 可见性过滤，避免渲染点了会 404 的私密标签）
@@ -69,6 +69,6 @@ const dateStr = date.toLocaleDateString('zh-CN', {
         );
       })}
     </div>
-    <span class="ml-auto shrink-0">{CATEGORY_LABELS[category as Category]}</span>
+    <span class="ml-auto shrink-0">{DOMAIN_LABELS[domain as Domain]}</span>
   </div>
 </article>
