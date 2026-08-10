@@ -2,13 +2,13 @@
 
 本篇讲**操作流程**：怎么一步步新增标签、新增文章、把标签绑到文章上。字段定义与权限模型的完整说明见根 [`README.md`](../README.md) 的「数据模型」「权限模型」，此处不重复 schema，只讲怎么做、有哪些坑。
 
-> 文章/标签 Markdown **不在主仓库**，而在独立的**私密内容仓库**里（结构：`posts/*.md` + `tags/*.yml`）。`pnpm dev` / `pnpm build` 前的钩子会把它 clone 到 `.content-private/`，content collection 从那里读取。本指南里写「`posts/`」「`tags/`」时，指的是私密内容仓库里的对应目录。
+> 文章/标签/卡片 Markdown **不在主仓库**，而在独立的**私密内容仓库**里（结构：`posts/*.md` + `tags/*.yml` + `cards/*.md`）。`pnpm dev` / `pnpm build` 前的钩子会把它 clone 到 `.content-private/`，content collection 从那里读取。本指南里写「`posts/`」「`tags/`」「`cards/`」时，指的是私密内容仓库里的对应目录。
 
 > 四条核心规则先记住：
-> 1. 标签文件名（去掉 `.yml`）= 标签 **slug**；文章 frontmatter 的 `tags:` 引用的就是这个 slug。
-> 2. 文章文件名（去掉 `.md`）= 文章 **slug** = 详情页 URL（`/posts/<文件名>`）。
-> 3. 私密文章由 `src/lib/visibility.ts` 统一过滤——绑了 private 标签或写了 `private: true`，访客就完全看不到（列表、URL、搜索、导出、热力图全不出现）。
-> 4. **正文不要写一级标题 `#`**——H1 由详情页模板用 frontmatter 的 `title` 自动渲染；正文从二级标题 `##` 起笔。即便误写，渲染时也会被 `src/plugins/strip-h1.ts` 兜底剥离，不会重复显示。
+> 1. 标签文件名（去掉 `.yml`）= 标签 **slug**；文章/卡片 frontmatter 的 `tags:` 引用的就是这个 slug。
+> 2. 文章文件名（去掉 `.md`）= 文章 **slug** = 详情页 URL（`/posts/<文件名>`）。卡片文件名同理是卡片 **id**（仅作内部标识，不构成独立页面 URL）。
+> 3. 私密文章/卡片由 `src/lib/visibility.ts` 统一过滤——绑了 private 标签或写了 `private: true`，访客就完全看不到（文章：列表、URL、搜索、导出、热力图全不出现；卡片：不进轮播弹窗）。
+> 4. **正文不要写一级标题 `#`**——H1 由详情页/卡片弹窗模板用 frontmatter 的 `title` 自动渲染；正文从二级标题 `##` 起笔。即便误写，渲染时也会被 `src/plugins/strip-h1.ts` 兜底剥离，不会重复显示。
 
 ---
 
@@ -76,6 +76,47 @@ frontmatter 字段速查（schema 在 `src\content.config.ts`，写错枚举值 
 
 ---
 
+## 三、创建知识卡片
+
+知识卡片是类 Zettelkasten 的短知识点：标题是一个名词或短语（如「贝叶斯定理」「CAP 定理」），正文是一段简短解释。卡片不出现在文章列表/搜索索引里，而是以**弹窗轮播**的形式展示在 posts 列表页顶部（首页、四个领域分类页、文章列表页、标签详情页）：轮播条每 5s 切换标题，点击打开弹窗看正文。
+
+在私密内容仓库的 `cards/` 下新建 `.md` 文件，**文件名即卡片 id**（仅作内部标识）。
+
+示例：
+
+```markdown
+---
+title: 贝叶斯定理
+domain: tech
+published: 2026-08-09
+tags:
+  - statistics
+---
+
+描述在已知相关证据下，更新某假设概率的方法。
+
+## 公式
+
+P(H|E) = P(E|H)·P(H) / P(E)
+```
+
+frontmatter 字段速查（schema 在 `src\content.config.ts`）：
+
+| 字段 | 必填 | 取值 |
+|------|------|------|
+| `title` | ✅ | 一个名词或短语，代表知识点 |
+| `domain` | ✅ | `tech` / `life` / `career` / `other`（决定在哪个领域列表页轮播） |
+| `published` | ✅ | 日期，用于排序 |
+| `tags` | 可选 | 标签 slug 数组，引用 `tags/` 下的文件名（也影响可见性） |
+| `draft` | 可选，默认 `false` | `true` 时 dev 可见、生产构建排除 |
+| `private` | 可选，默认 `false` | `true` 时仅管理员可见 |
+
+与文章 frontmatter 的区别：卡片**没有** `category` / `excerpt` / `updated` / `note`，弹窗里直接渲染正文 body。
+
+> `domain` 决定卡片出现在哪个轮播位：`tech` 卡片只在 Tech 分类页和标签详情页轮播；想让它出现在首页轮播，需要……其实不用额外设置——首页轮播取的是**全部领域混合**的卡片（`filterVisibleCards`），每张卡片都会在首页出现，同时在其 `domain` 对应的分类页再出现一次。
+
+---
+
 ## 附：正文插图
 
 文章里的图片统一放 `public/images/<文章 slug>/` 下，正文用**以 `/` 开头的绝对路径**引用。
@@ -105,9 +146,9 @@ public/
 
 ---
 
-## 三、把标签绑定到文章
+## 四、把标签绑定到文章 / 卡片
 
-在文章 frontmatter 的 `tags:` 下加上**标签的 slug**（即私密内容仓库 `tags/` 下那个 `.yml` 的文件名，不带扩展名）：
+在文章或卡片 frontmatter 的 `tags:` 下加上**标签的 slug**（即私密内容仓库 `tags/` 下那个 `.yml` 的文件名，不带扩展名）：
 
 ```yaml
 tags:
@@ -117,37 +158,41 @@ tags:
 
 > 注意引用的是**文件名（slug）**，不是 `name`（如「前端」）。slug 写错不会报错，但该标签不会在文章页显示。
 
+> 卡片绑标签除了分类展示用途，还有一个作用：当卡片绑定了一个 private 标签时，该卡片**间接变为私密**（与文章同规则），访客看不到。此外，标签详情页（`/tags/<slug>`）的轮播入口会展示绑了该标签的卡片——给卡片打标签，等于让它在对应标签页也有曝光位。
+
 ---
 
-## 四、易踩坑清单
+## 五、易踩坑清单
 
 1. **先建标签再建文章**：文章引用的 slug 在 `tags/` 找不到对应文件时不会报错，但标签渲染不出来。新建文章前先确认引用的标签都已存在。
 
-2. **私密文章的两种写法**（可叠加，效果相同）：
-   - 文章 frontmatter 直接写 `private: true`；
+2. **私密文章/卡片的两种写法**（可叠加，效果相同）：
+   - frontmatter 直接写 `private: true`；
    - 或绑定一个 `private: true` 的标签（如 `private-thoughts`）。
    
-   两者都会被 `filterVisiblePosts` 对访客隐藏——**不出现在列表、URL 直接访问 404、搜索命不中、不可导出、不计入热力图**。
+   两者都会被 `filterVisiblePosts` / `filterVisibleCards*` 对访客隐藏——文章**不出现在列表、URL 直接访问 404、搜索命不中、不可导出、不计入热力图**；卡片**不进任何页面的轮播弹窗**。
 
-3. **草稿的双面性**：`draft: true` 在 `astro dev` 下对所有人可见（方便预览），生产构建默认排除。线上不想公开的文章用 `draft` 或 `private`，别只靠「还没发布」的惯性思维。
+3. **草稿的双面性**：`draft: true` 在 `astro dev` 下对所有人可见（方便预览），生产构建默认排除。线上不想公开的文章/卡片用 `draft` 或 `private`，别只靠「还没发布」的惯性思维。
 
 4. **slug 命名**：用小写、连字符分隔（`typescript-tips`、`private-thoughts`），避免空格和中文——它会出现在 URL、搜索索引、导出文件名里。
 
 5. **schema 强校验**：`category` / `domain` 写错枚举值、必填字段缺失、日期格式不对，都会在 dev/build 时报错。改对即可，不需要手动维护索引。
 
-6. **正文不写一级标题**：详情页的 H1 已由 frontmatter 的 `title` 渲染在标题区。正文若再写 `#`，标题会重复显示两次。正文一律从 `##` 起笔；即便误写 `#`，`src/plugins/strip-h1.ts` 会在渲染时剥离兜底，但请保持源文件干净、直接不写。
+6. **正文不写一级标题**：详情页/卡片弹窗的 H1 已由 frontmatter 的 `title` 渲染在标题区。正文若再写 `#`，标题会重复显示两次。正文一律从 `##` 起笔；即便误写 `#`，`src/plugins/strip-h1.ts` 会在渲染时剥离兜底，但请保持源文件干净、直接不写。
+
+7. **卡片正文走与文章同一套渲染管线**（satteri + strip-h1），所以文章正文能用的 Markdown 语法、代码块、数学公式、图片引用，卡片里都能用。但卡片弹窗有 `max-h-[70vh]` 滚动容器，正文过长会出滚动条——卡片定位是「短知识点」，正文控制在可一屏读完为宜，长内容请写成文章而非卡片。
 
 ---
 
-## 五、发布流程
+## 六、发布流程
 
 1. 在私密内容仓库的 `tags/` 准备好需要的标签（若已存在可跳过）。
-2. 在私密内容仓库的 `posts/` 新建 `.md` 文件，填好 frontmatter 和正文，**提交并 push 到私密内容仓库**。
+2. 在私密内容仓库的 `posts/`（文章）或 `cards/`（卡片）新建 `.md` 文件，填好 frontmatter 和正文，**提交并 push 到私密内容仓库**。
 3. 启动 dev server 预览（注意先注入环境变量，见 `AGENTS.md` 的 Development 段）：
    ```bash
    set -a; . ./.env; set +a
    astro dev --background
    ```
    首次启动会自动 clone 私密内容仓库到 `.content-private/`；后续每次 `pnpm dev` 会自动 pull 最新内容。
-4. 访问 `/posts/<slug>` 确认渲染、标签、可见性符合预期。
+4. 访问 `/posts/<slug>`（文章）确认渲染、标签、可见性符合预期；卡片则访问首页或对应领域分类页，确认轮播条出现该卡片标题、点击弹窗正文渲染正常。
 5. 内容改动提交到**私密内容仓库**（那里是内容源）。主仓库只在改代码/schema/配置时才提交。

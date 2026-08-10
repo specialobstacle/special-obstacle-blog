@@ -30,7 +30,7 @@ src/
 │   └── heatmap.ts           # About 页热力图聚合（内部调 filterVisiblePosts）
 ├── middleware.ts            # 每请求注入 Astro.locals.isAdmin
 ├── layouts/BaseLayout.astro # 含暗色模式阻塞脚本
-├── components/              # Header / PostCard / PostList / PostListPage / Toc / ThemeToggle / SearchBox / Heatmap
+├── components/              # Header / PostCard / PostList / PostListPage / CardCarousel / Toc / ThemeToggle / SearchBox / Heatmap
 ├── pages/
 │   ├── index.astro          # 首页
 │   ├── about.astro          # About（含写作频率热力图）
@@ -82,14 +82,32 @@ private: false      # 私密标签绑定的文章仅管理员可见
 description: 简介
 ```
 
-> 实际动手写文章 / 建标签 / 绑定的逐步流程与易踩坑，见 [`docs/content-guide.md`](./docs/content-guide.md)。
+**知识卡片（cards）：**
+
+```yaml
+---
+title: 名词或短语           # 知识点名，如「贝叶斯定理」
+domain: tech               # 与 posts 同枚举，决定在哪个列表页轮播
+published: 2026-08-09
+tags: [statistics]         # 引用 tag slug；绑 private 标签则卡片间接私密
+draft: false               # dev 可见，build 排除
+private: false             # 显式私密（也可由 private 标签间接判定）
+---
+
+正文是一段简短解释，正文里不写一级标题（与文章一致，由模板渲染标题）。
+```
+
+> 卡片不设 `category` / `excerpt`（弹窗内直接渲染 body），不出现在文章列表/搜索索引里，仅以弹窗形式在 posts 列表页顶部轮播展示（首页、四个领域分类页、文章列表页、标签详情页）。
+
+> 实际动手写文章 / 建标签 / 建卡片 / 绑定的逐步流程与易踩坑，见 [`docs/content-guide.md`](./docs/content-guide.md)。
 
 ## 权限模型
 
-- 访客：看不到 `draft`（生产）、`private: true` 的文章，也看不到任何绑定了 private 标签的文章——不出现在列表、不可访问 URL、不被搜索命中。
+- 访客：看不到 `draft`（生产）、`private: true` 的文章/卡片，也看不到任何绑定了 private 标签的文章/卡片——不出现在列表、不可访问 URL、不被搜索命中、不进卡片轮播。
 - 管理员：通过 `/login` 输入密码登录后，线上也能看到全部内容（Header 显示「登出」入口）。
-- **所有可见性判断必须经过 `src/lib/visibility.ts` 的 `filterVisiblePosts(isAdmin)`**，不允许在调用处自行 if，避免漏判导致私密内容泄露。
+- **所有可见性判断必须经过 `src/lib/visibility.ts`**——文章用 `filterVisiblePosts(isAdmin)` / `getVisiblePost`，知识卡片用 `filterVisibleCards` / `filterVisibleCardsByDomain` / `filterVisibleCardsByTag`，不允许在调用处自行 if，避免漏判导致私密内容泄露。
 - 搜索索引端点（`/api/search.json`）、单篇导出端点（`/posts/[slug].md`）、About 页热力图聚合（`src/lib/heatmap.ts`）**全部经 `filterVisiblePosts` / `getVisiblePost`**——私密文章对访客不进索引、不可导出、不计入热力图。
+- 知识卡片轮播入口（`src/components/CardCarousel.astro`）由 `src/pages/index.astro`、`src/pages/posts/**`、`src/pages/tags/[tag].astro` 调用，数据均在调用方经 `filterVisibleCards*` 过滤后传入；组件本身不再过滤，故**调用方务必传过滤后的结果**。
 - 登录由 `/login`（密码 + HMAC token cookie）与 `/logout`（清 cookie）处理，含速率限制（`src/lib/rateLimit.ts`）与 CSRF 同源校验（`src/lib/csrf.ts`）。部署流程见 `docs/vercel-deploy.md`。
 
 ## 常用命令
@@ -143,6 +161,7 @@ description: 简介
 - ✅ 阶段 3：部署 Vercel + 线上密码门（`/login`、`/logout`、速率限制、CSRF；见 `docs/vercel-deploy.md`）
 - ✅ 阶段 4：全站搜索（MiniSearch）、单篇导出 Markdown、About 页写作频率热力图
 - ✅ 阶段 5：完善 `docs/`（导航索引 + 归档历史提示词）、精简 `AGENTS.md`（补 commit 规范与可见性约束）、修正 README 与代码不符之处
+- ✅ 阶段 6：知识卡片（类 Zettelkasten 弹窗轮播）——新增 `cards` collection、`filterVisibleCards*` 可见性出口、`CardCarousel` 组件，接入首页 / 四领域分类页 / 文章列表页 / 标签详情页
 
 ## 协作约定
 
