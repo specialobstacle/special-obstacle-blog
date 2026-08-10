@@ -7,25 +7,29 @@
 
 ## 可见性硬约束（最容易踩坑）
 
-**所有可见性判断必须经 `src/lib/visibility.ts` 的 `filterVisiblePosts(isAdmin)` / `getVisiblePost(slug, isAdmin)`，不允许在调用处自行 if**，否则私密内容会泄露给访客。
+**所有可见性判断必须经 `src/lib/visibility.ts`，不允许在调用处自行 if**，否则私密内容会泄露给访客。
+
+- 文章（posts）：`filterVisiblePosts(isAdmin)` / `getVisiblePost(slug, isAdmin)`
+- 知识卡片（cards）：`filterVisibleCards(isAdmin)` / `filterVisibleCardsByDomain(domain, isAdmin)`
 
 当前已接入过滤的易漏点（改这些文件时务必保持）：
 
 - 列表/详情/分类/标签页：`src/pages/index.astro`、`src/pages/posts/**`、`src/pages/tags/**`
+- 卡片轮播入口：`src/components/CardCarousel.astro`（由 `src/pages/index.astro`、`src/pages/posts/**` 调用，数据已在调用方经 `filterVisibleCards*` 过滤后传入；组件本身不再过滤，故调用方务必传过滤后的结果）
 - 搜索索引端点：`src/pages/api/search.json.ts`
 - 单篇 Markdown 导出端点：`src/pages/posts/[slug].md.ts`
 - About 页热力图聚合：`src/lib/heatmap.ts`（`getPostCountsByDate` 内部调 `filterVisiblePosts`）
 
-新增任何会输出文章内容的页面或端点时，**第一件事**是接上 `filterVisiblePosts` / `getVisiblePost`。
+新增任何会输出文章/卡片内容的页面或端点时，**第一件事**是接上对应的 `filterVisible*` 函数。
 
 ## 内容源（外置私密仓库）
 
-**文章/标签 Markdown 不在本仓库**，而在独立的私密内容仓库里（结构：`posts/*.md` + `tags/*.yml`）。
+**文章/标签/卡片 Markdown 不在本仓库**，而在独立的私密内容仓库里（结构：`posts/*.md` + `tags/*.yml` + `cards/*.md`）。
 
 - `predev` / `prebuild` 钩子（`scripts/sync-content.mjs`）会按 `CONTENT_REPO_URL` / `CONTENT_REPO_TOKEN` 把它 clone/pull 到 `.content-private/`（被 `.gitignore` 忽略，不进主仓库）。
-- `content.config.ts` 的两个 collection 的 `base` 指向 `.content-private/posts` 与 `.content-private/tags`。
-- 改 schema（`content.config.ts`）在主仓库；写/改文章内容去**私密内容仓库**。
-- 本地首次跑 `pnpm dev` 前，`.env` 里必须有 `CONTENT_REPO_URL`（+ 可选 `CONTENT_REPO_TOKEN`），否则钩子报错退出、dev 起不来。
+- `content.config.ts` 的三个 collection 的 `base` 指向 `.content-private/posts`、`.content-private/tags` 与 `.content-private/cards`。
+- 改 schema（`content.config.ts`）在主仓库；写/改文章/卡片内容去**私密内容仓库**。
+- 本地首次跑 `pnpm dev` 前，`.env` 里必须有 `CONTENT_REPO_URL`（+ 可选 `CONTENT_REPO_TOKEN`），否则钩子报错退出、dev 起不起来。
 - clone 拉不到内容必须**硬失败**（脚本 exit 非 0），绝不能静默构建空站上线。
 
 ## Development
