@@ -1,10 +1,14 @@
 ---
 import PostListPage from '../../components/PostListPage.astro';
-import { getVisiblePostsByTag } from '../../lib/visibility';
+import {
+  getVisiblePostsByTag,
+  filterVisibleCardsByTag,
+} from '../../lib/visibility';
 
 const { tag } = Astro.params;
 const { isAdmin } = Astro.locals;
 
+// 文章与卡片并行查询；标签存在性/私密性由 getVisiblePostsByTag 决定
 const { tag: tagEntry, posts } = tag
   ? await getVisiblePostsByTag(tag, isAdmin)
   : { tag: null, posts: [] };
@@ -13,11 +17,14 @@ const { tag: tagEntry, posts } = tag
 if (!tagEntry) {
   return Astro.redirect('/404');
 }
+
+const cards = tag ? await filterVisibleCardsByTag(tag, isAdmin) : [];
 ---
 
 <PostListPage
   title={`标签：${tagEntry.data.name}`}
   posts={posts}
+  cards={cards}
   showAdminBadges={isAdmin}
   emptyHint="该标签下暂时没有文章。"
 />

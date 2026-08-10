@@ -200,3 +200,18 @@ export async function filterVisibleCardsByDomain(
   const cards = await filterVisibleCards(isAdmin);
   return cards.filter((c) => c.data.domain === domain);
 }
+
+/**
+ * 取某标签下对当前 viewer 可见的卡片 —— 标签详情页轮播入口。
+ *
+ * 不重复标签存在性/私密性判断：调用方（[tag].astro）已先经
+ * getVisiblePostsByTag 决定是否 404，能进到本函数说明标签已确认可见。
+ * 本函数只做该标签下卡片的纯过滤。
+ */
+export async function filterVisibleCardsByTag(
+  slug: string,
+  isAdmin: boolean,
+): Promise<CardEntry[]> {
+  const cards = await filterVisibleCards(isAdmin);
+  return cards.filter((c) => c.data.tags.includes(slug));
+}
