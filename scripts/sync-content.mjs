@@ -52,9 +52,16 @@ function buildRepoUrl() {
   return base;
 }
 
+/**
+ * 执行 git 子命令。
+ *
+ * @param {string} args - git 子命令参数（如 `-C "dir" pull --ff-only`）
+ * @param {Partial<import('node:child_process').ExecSyncOptions> & { silent?: boolean }} [opts]
+ *   silent: 自定义标志——为 true 时 stdout/stderr 静默（clone/pull 含 token，
+ *   避免 token 进日志）；其余字段透传给 execSync（stdio 由本函数按 silent 决定，
+ *   调用方不应再传 stdio）
+ */
 function runGit(args, opts = {}) {
-  // git 输出含 token 时会被 GIT_ASKPASS/credential helper 拦截；
-  // 为防 token 进日志，clone/fetch 用 quiet 模式，错误信息走 stderr 摘要
   execSync(`git ${args}`, { stdio: opts.silent ? ['ignore', 'ignore', 'inherit'] : 'inherit', ...opts });
 }
 
