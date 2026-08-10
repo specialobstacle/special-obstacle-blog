@@ -88,25 +88,34 @@ export interface VisibleTag {
 /**
  * 取当前 viewer 可见的标签集合 —— 标签层面的单一事实源。
  *
- * 可见性「按文章派生」：先拿可见文章，再收集这些文章引用的标签 slug。
- * 因此私密标签绑定的文章对访客已被 filterVisiblePosts 过滤，
- * 这些标签自然不会出现在访客视图中。
+ * 可见性「按文章与卡片派生」：先拿可见文章与可见卡片，再收集它们引用的
+ * 标签 slug。因此私密标签绑定的文章/卡片对访客已被 filterVisible*
+ * 过滤，这些标签自然不会出现在访客视图中。
+ *
+ * count 含义为「可见文章数 + 可见卡片数」——一个标签只要被任一可见
+ * 文章或卡片引用就会出现；只挂在卡片上、无文章引用的标签也会列出。
  *
  * 额外兜底：非管理员再剔除一次 data.private 标签，
- * 防止「标签声明了 private 但没有文章引用」这种数据不一致导致泄露。
+ * 防止「标签声明了 private 但没有可见内容引用」这种数据不一致导致泄露。
  */
 export async function getVisibleTags(
   isAdmin: boolean,
 ): Promise<VisibleTag[]> {
-  const [visiblePosts, tags] = await Promise.all([
+  const [visiblePosts, visibleCards, tags] = await Promise.all([
     filterVisiblePosts(isAdmin),
+    filterVisibleCards(isAdmin),
     getCollection('tags'),
   ]);
 
-  // 统计每个被可见文章引用的标签出现次数
+  // 统计每个被可见文章/卡片引用的标签出现次数
   const counts = new Map<string, number>();
   for (const post of visiblePosts) {
     for (const slug of post.data.tags) {
+      counts.set(slug, (counts.get(slug) ?? 0) + 1);
+    }
+  }
+  for (const card of visibleCards) {
+    for (const slug of card.data.tags) {
       counts.set(slug, (counts.get(slug) ?? 0) + 1);
     }
   }
@@ -121,36 +130,40 @@ export async function getVisibleTags(
 }
 
 /**
- * 取某标签下对当前 viewer 可见的文章。
+ * 取某标签下对当前 viewer 可见的文章与卡片。
  *
  * 返回的 tag 为 null 时调用方应 404 —— 覆盖三种不可见情形：
  *   1. 标签不存在
  *   2. 标签 private 且非管理员
- *   3. 标签下没有任何可见文章（如全是草稿/私密）
+ *   3. 标签下没有任何可见文章且没有任何可见卡片（如全是草稿/私密）
  * 绝不向访客暴露标签存在性。
+ *
+ * 返回的 cards 与 posts 同源过滤，调用方无需再单独调 filterVisibleCardsByTag。
  */
 export async function getVisiblePostsByTag(
   slug: string,
   isAdmin: boolean,
-): Promise<{ tag: TagEntry | null; posts: PostEntry[] }> {
-  const [visiblePosts, tags] = await Promise.all([
+): Promise<{ tag: TagEntry | null; posts: PostEntry[]; cards: CardEntry[] }> {
+  const [visiblePosts, visibleCards, tags] = await Promise.all([
     filterVisiblePosts(isAdmin),
+    filterVisibleCards(isAdmin),
     getCollection('tags'),
   ]);
   const tag = tags.find((t) => t.id === slug) ?? null;
 
   // 不存在 或 私密且非管理员 → 视作不可见
   if (!tag || (!isAdmin && tag.data.private)) {
-    return { tag: null, posts: [] };
+    return { tag: null, posts: [], cards: [] };
   }
 
   const posts = visiblePosts.filter((p) => p.data.tags.includes(slug));
-  // 该标签下没有任何可见文章 → 同样不暴露
-  if (posts.length === 0) {
-    return { tag: null, posts: [] };
+  const cards = visibleCards.filter((c) => c.data.tags.includes(slug));
+  // 该标签下没有任何可见文章且没有任何可见卡片 → 同样不暴露
+  if (posts.length === 0 && cards.length === 0) {
+    return { tag: null, posts: [], cards: [] };
   }
 
-  return { tag, posts };
+  return { tag, posts, cards };
 }
 
 // ──────────────────────────────────────────────────────────────────────

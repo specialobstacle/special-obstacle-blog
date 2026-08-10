@@ -1,24 +1,19 @@
 ---
 import PostListPage from '../../components/PostListPage.astro';
-import {
-  getVisiblePostsByTag,
-  filterVisibleCardsByTag,
-} from '../../lib/visibility';
+import { getVisiblePostsByTag } from '../../lib/visibility';
 
 const { tag } = Astro.params;
 const { isAdmin } = Astro.locals;
 
-// 文章与卡片并行查询；标签存在性/私密性由 getVisiblePostsByTag 决定
-const { tag: tagEntry, posts } = tag
+// 文章与卡片同源查询；标签存在性/私密性由 getVisiblePostsByTag 决定
+const { tag: tagEntry, posts, cards } = tag
   ? await getVisiblePostsByTag(tag, isAdmin)
-  : { tag: null, posts: [] };
+  : { tag: null, posts: [], cards: [] };
 
-// 标签不存在 / 私密且非管理员 / 无可见文章 → 404，绝不暴露标签存在性
+// 标签不存在 / 私密且非管理员 / 无可见文章且无可见卡片 → 404，绝不暴露标签存在性
 if (!tagEntry) {
   return Astro.redirect('/404');
 }
-
-const cards = tag ? await filterVisibleCardsByTag(tag, isAdmin) : [];
 ---
 
 <PostListPage

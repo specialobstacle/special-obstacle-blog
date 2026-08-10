@@ -11,6 +11,10 @@ import type { PostEntry, CardEntry } from '../lib/visibility';
  *
  * 可选传入 cards：在标题与文章列表之间渲染知识卡片轮播入口。
  * 调用方负责先用 filterVisibleCards(ByDomain) 过滤，空数组时不渲染。
+ *
+ * 空态渲染规则：posts 为空时，仅当 cards 也为空才显示 emptyHint
+ * （真正无内容的标签页）；若已有卡片轮播，则不再渲染文章列表区，
+ * 避免出现「该标签下暂时没有文章」这类误导性空态。
  */
 interface Props {
   title: string;
@@ -32,9 +36,11 @@ const {
 <BaseLayout title={title}>
   <h1 class="mb-6 text-2xl font-bold">{title}</h1>
   {cards.length > 0 && <CardCarousel cards={cards} />}
-  <PostList
-    posts={posts}
-    showAdminBadges={showAdminBadges}
-    emptyHint={emptyHint}
-  />
+  {(posts.length > 0 || cards.length === 0) && (
+    <PostList
+      posts={posts}
+      showAdminBadges={showAdminBadges}
+      emptyHint={emptyHint}
+    />
+  )}
 </BaseLayout>
