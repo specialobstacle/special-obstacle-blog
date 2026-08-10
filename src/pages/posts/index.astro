@@ -1,14 +1,19 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import PostList from '../../components/PostList.astro';
-import { filterVisiblePosts } from '../../lib/visibility';
+import CardCarousel from '../../components/CardCarousel.astro';
+import { filterVisiblePosts, filterVisibleCards } from '../../lib/visibility';
 
 const { isAdmin } = Astro.locals;
-const posts = await filterVisiblePosts(isAdmin);
+const [posts, cards] = await Promise.all([
+  filterVisiblePosts(isAdmin),
+  filterVisibleCards(isAdmin),
+]);
 ---
 
 <BaseLayout title="Posts">
   <h1 class="mb-6 text-2xl font-bold">全部文章</h1>
+  {cards.length > 0 && <CardCarousel cards={cards} />}
   <PostList
     posts={posts}
     showAdminBadges={isAdmin}

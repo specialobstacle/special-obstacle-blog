@@ -2,7 +2,7 @@
 import PostListPage from '../../components/PostListPage.astro';
 import { getDomainPosts } from './_domain';
 
-const { posts, label, notFound } = await getDomainPosts(
+const { posts, cards, label, notFound } = await getDomainPosts(
   'other',
   Astro.locals.isAdmin,
 );
@@ -12,6 +12,7 @@ if (notFound) return Astro.redirect('/404');
 <PostListPage
   title={`${label}文章`}
   posts={posts}
+  cards={cards}
   showAdminBadges={Astro.locals.isAdmin}
   emptyHint={`${label}分类下还没有文章。`}
 />

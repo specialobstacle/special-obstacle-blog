@@ -1,11 +1,15 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
 import PostList from '../components/PostList.astro';
-import { filterVisiblePosts } from '../lib/visibility';
+import CardCarousel from '../components/CardCarousel.astro';
+import { filterVisiblePosts, filterVisibleCards } from '../lib/visibility';
 
 const { isAdmin } = Astro.locals;
-// 首页只展示最近 5 篇可见文章
-const all = await filterVisiblePosts(isAdmin);
+// 首页只展示最近 5 篇可见文章 + 全部领域混合的知识卡片
+const [all, cards] = await Promise.all([
+  filterVisiblePosts(isAdmin),
+  filterVisibleCards(isAdmin),
+]);
 const recent = all.slice(0, 5);
 ---
 
@@ -30,6 +34,8 @@ const recent = all.slice(0, 5);
       </a>
     </div>
   </section>
+
+  {cards.length > 0 && <CardCarousel cards={cards} />}
 
   <section>
     <div class="mb-4 flex items-center justify-between">

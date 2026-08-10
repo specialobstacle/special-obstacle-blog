@@ -1,0 +1,93 @@
+---
+import { render } from 'astro:content';
+import CardCarousel from './CardCarousel.tsx';
+import { DOMAIN_LABELS, type Domain } from '../lib/constants';
+import type { CardEntry } from '../lib/visibility';
+
+/**
+ * 知识卡片轮播入口 —— posts 列表页顶部展示。
+ *
+ * 架构说明（为什么不把 body 当字符串传给 React）：
+ *   Astro 没有「把 content entry 渲染成 HTML 字符串」的稳定 API，
+ *   Container API 是 experimental 且开销大。因此采用分工方案：
+ *     - 本 .astro 文件负责把每张卡片的弹窗 DOM 静态渲染好（Markdown 走
+ *       satteri + stripH1，与文章详情页同一渲染管线），用 hidden 隐藏。
+ *     - CardCarousel.tsx（React island）只持有轻量元数据 {id, title}，
+ *       负责「轮播标题切换」与「打开/关闭对应弹窗」的状态控制，
+ *       通过 data-card-id 在 DOM 上定位弹窗节点切 hidden/opacity。
+ *
+ *   好处：零新依赖、Markdown 渲染零重复、无 hydration mismatch
+ *   （React 不渲染内容，只切 class；SSR 初始态 = 第一张卡片标题）。
+ *
+ * 调用方必须先用 filterVisibleCardsByDomain 过滤，传入的 cards 全部可见。
+ */
+
+interface Props {
+  cards: CardEntry[];
+  /** 当前领域，用于展示「N 张 tech 卡片」之类的提示文案 */
+  domain?: Domain;
+}
+
+const { cards, domain } = Astro.props;
+const domainLabel = domain ? DOMAIN_LABELS[domain] : '';
+
+// 预渲染每张卡片的 body → { id, title, Content, tags }
+const rendered = await Promise.all(
+  cards.map(async (card) => {
+    const { Content } = await render(card);
+    return {
+      id: card.id,
+      title: card.data.title,
+      tags: card.data.tags,
+      Content,
+    };
+  }),
+);
+
+// 传给 React island 的轻量元数据（不含 body）
+const cardMeta = rendered.map(({ id, title }) => ({ id, title }));
+---
+
+<section class="mb-8 border border-border rounded-lg bg-surface/40 p-4">
+  {/* 轮播条：React island 接管。SSR 端先静态渲染第一张标题做占位，
+      避免 React 未挂载时空白（也作 SEO/无 JS 兜底）。 */}
+  <CardCarousel client:visible cards={cardMeta} domainLabel={domainLabel} count={cards.length} />
+
+  {/* 所有卡片的弹窗 DOM，默认 hidden，由 React 切显隐。
+      放在 section 内、轮播条之后，z-50 浮层定位脱离文档流不影响布局。 */}
+  {rendered.map(({ id, title, tags, Content }) => (
+    <div
+      data-card-modal={id}
+      data-card-hidden="true"
+      class="fixed inset-0 z-50 hidden items-center justify-center bg-black/50 p-4 opacity-0 transition-opacity duration-200"
+      aria-hidden="true"
+      role="dialog"
+      aria-modal="true"
+      aria-label={title}
+    >
+      {/* 点遮罩关闭：由 React 监听 mousedown（见 CardCarousel.tsx）。
+          此处 stop-propagation class 仅供 React 区分点击目标。 */}
+      <div
+        class="data-card-inner relative w-full max-w-lg rounded-lg border border-border bg-bg p-6 shadow-xl"
+      >
+        <button
+          type="button"
+          data-card-close={id}
+          aria-label="关闭卡片"
+          class="absolute right-3 top-3 flex h-7 w-7 items-center justify-center rounded-md text-text-muted transition hover:text-text"
+        >✕</button>
+        <h2 class="mb-3 pr-8 text-xl font-bold text-text">{title}</h2>
+        <div class="prose max-h-[70vh] overflow-y-auto text-text">
+          <Content />
+        </div>
+        {tags.length > 0 && (
+          <div class="mt-4 flex flex-wrap gap-1.5 border-t border-border pt-3">
+            {tags.map((t) => (
+              <span class="rounded bg-surface px-1.5 py-0.5 text-[11px] text-text-muted">#{t}</span>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  ))}
+</section>

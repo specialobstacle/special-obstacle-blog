@@ -1,26 +1,37 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
 import PostList from './PostList.astro';
-import type { PostEntry } from '../lib/visibility';
+import CardCarousel from './CardCarousel.astro';
+import type { PostEntry, CardEntry } from '../lib/visibility';
 
 /**
  * 带标题的文章列表页骨架。
  * 分类页（/posts/tech 等）与标签详情页（/tags/[tag]）共用此布局，
  * 保证列表页视觉与行为一致，标题/空态文案由调用方传入。
+ *
+ * 可选传入 cards：在标题与文章列表之间渲染知识卡片轮播入口。
+ * 调用方负责先用 filterVisibleCards(ByDomain) 过滤，空数组时不渲染。
  */
 interface Props {
   title: string;
   posts: PostEntry[];
+  cards?: CardEntry[];
   showAdminBadges?: boolean;
   emptyHint?: string;
 }
 
-const { title, posts, showAdminBadges = false, emptyHint = '暂时没有文章。' } =
-  Astro.props;
+const {
+  title,
+  posts,
+  cards = [],
+  showAdminBadges = false,
+  emptyHint = '暂时没有文章。',
+} = Astro.props;
 ---
 
 <BaseLayout title={title}>
   <h1 class="mb-6 text-2xl font-bold">{title}</h1>
+  {cards.length > 0 && <CardCarousel cards={cards} />}
   <PostList
     posts={posts}
     showAdminBadges={showAdminBadges}

@@ -56,4 +56,33 @@ const tags = defineCollection({
   }),
 });
 
-export const collections = { posts, tags };
+/**
+ * 知识卡片（Knowledge Cards）—— 类 Zettelkasten 的短知识点。
+ *
+ * 与 posts 的区别：
+ *   - 标题是一个名词或短语（知识点名），正文是一段简短解释
+ *   - 不设 category（卡片本身就是一种类型），不设 excerpt（弹窗内直接渲染 body）
+ *   - 不出现在文章列表/搜索索引里，仅以弹窗形式在 posts 列表页顶部轮播展示
+ *
+ * 可见性规则与 posts 完全一致（draft / private / private 标签间接私密），
+ * 统一经 visibility.ts 的 filterVisibleCards* 出口。
+ */
+const cards = defineCollection({
+  loader: glob({ pattern: '**/*.md', base: `${CONTENT_BASE}/cards` }),
+  schema: z.object({
+    /** 标题：一个名词或短语，代表一个知识点 */
+    title: z.string(),
+    /** 领域：与 posts 同枚举，决定在哪个 posts 列表页轮播 */
+    domain: z.enum(DOMAINS),
+    /** 发布日期，用于排序 */
+    published: z.coerce.date(),
+    /** 绑定的标签 slug 列表，引用 tags 集合（可见性亦受 private 标签影响） */
+    tags: z.array(z.string()).default([]),
+    /** 草稿：dev 可见，build 默认排除 */
+    draft: z.boolean().default(false),
+    /** 显式私密标记：也可由绑定的 private 标签间接判定 */
+    private: z.boolean().default(false),
+  }),
+});
+
+export const collections = { posts, tags, cards };

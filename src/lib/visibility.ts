@@ -11,12 +11,15 @@ import { getCollection, type CollectionEntry } from 'astro:content';
  * 所有列表、详情、搜索索引、导出都必须经过 filterVisible，
  * 不允许在调用处自行判断，避免漏判导致私密内容泄露。
  *
+ * 知识卡片（cards）遵循完全相同的规则，对应 filterVisibleCards* 出口。
+ *
  * 注意：dev 环境下草稿对所有人可见（Astro 行为 + 本函数也放行），
  * 仅生产构建排除草稿。私密内容则始终受 isAdmin 控制。
  */
 
 export type PostEntry = CollectionEntry<'posts'>;
 export type TagEntry = CollectionEntry<'tags'>;
+export type CardEntry = CollectionEntry<'cards'>;
 
 /** 读取所有私密标签的 id 集合 */
 export async function getPrivateTagIds(): Promise<Set<string>> {
@@ -148,4 +151,52 @@ export async function getVisiblePostsByTag(
   }
 
   return { tag, posts };
+}
+
+// ──────────────────────────────────────────────────────────────────────
+// 知识卡片（cards）可见性 —— 与 posts 完全同构，规则同上。
+// 任何输出卡片内容的页面/组件都必须经过这里的出口，不允许调用处自行 if。
+// ──────────────────────────────────────────────────────────────────────
+
+/**
+ * 判断单张知识卡片对当前 viewer 是否可见。逻辑与 isPostVisible 一致，
+ * 复用同一份 privateTagIds（cards 与 posts 共享 tags 集合）。
+ */
+export function isCardVisible(
+  card: CardEntry,
+  privateTagIds: Set<string>,
+  isAdmin: boolean,
+): boolean {
+  if (isAdmin) return true;
+  if (card.data.private) return false;
+  if (card.data.tags.some((slug) => privateTagIds.has(slug))) return false;
+  if (card.data.draft && !import.meta.env.DEV) return false;
+  return true;
+}
+
+/** 过滤可见卡片 —— 按 published 倒序，供弹窗轮播入口统一调用 */
+export async function filterVisibleCards(
+  isAdmin: boolean,
+): Promise<CardEntry[]> {
+  const [cards, privateTagIds] = await Promise.all([
+    getCollection('cards'),
+    getPrivateTagIds(),
+  ]);
+  return cards
+    .filter((c) => isCardVisible(c, privateTagIds, isAdmin))
+    .sort(
+      (a, b) => b.data.published.getTime() - a.data.published.getTime(),
+    );
+}
+
+/**
+ * 取某领域下对当前 viewer 可见的卡片 —— posts 列表页顶部轮播入口的唯一出口。
+ * 领域不合法返回空数组（调用方据此跳过轮播渲染）。
+ */
+export async function filterVisibleCardsByDomain(
+  domain: string,
+  isAdmin: boolean,
+): Promise<CardEntry[]> {
+  const cards = await filterVisibleCards(isAdmin);
+  return cards.filter((c) => c.data.domain === domain);
 }
