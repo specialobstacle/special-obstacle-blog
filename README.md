@@ -140,7 +140,7 @@ private: false             # 显式私密（也可由 private 标签间接判定
 
 **写 / 改文章、标签**（→ 私密内容仓库 `special-obstacle-blog-content`）
 
-1. 在内容仓库的工作区（本地 clone，如 `D:\Codebase\special-obstacle-blog-content`）改 `posts/*.md` 或 `tags/*.yml`。
+1. 在内容仓库的工作区（本地 clone，如 `D:\Codebase\special-obstacle-blog-content`）改 `posts/*.md` 或 `tags/*.yml`。新建文章/卡片可直接在主仓库跑 `pnpm new <slug>` 脚手架（用法见 [`docs/content-guide.md`](docs/content-guide.md)），自动生成模板到 `.content-private/`。
 2. `git add` + `git commit` + `git push` 到私密内容仓库（用你账号的 SSH key / PAT 鉴权，与主仓库的只读 PAT 无关）。
 3. 回主仓库跑 `pnpm dev` 预览 —— `predev` 钩子会自动 `git pull` 最新内容到 `.content-private/`。
 4. 确认无误即完成。**内容改动不进主仓库**，线上由 Vercel 下次构建时自动拉取。

@@ -38,6 +38,16 @@ description: Rust 语言与系统编程
 
 在私密内容仓库的 `posts/` 下新建 `.md` 文件，**文件名即 slug，即 URL**。
 
+**推荐用脚手架命令**，在主仓库根目录执行（会自动同步内容仓库并生成带合法 frontmatter 的模板，免手写）：
+
+```bash
+pnpm new my-post-slug                        # 最简：tech 文章，draft: true
+pnpm new my-diary --category diary --domain life --title "标题" --tags a,b
+pnpm new my-card-slug --card                 # 新建知识卡片（生成到 cards/）
+```
+
+选项：`--category <article|diary|resume|page>`、`--domain <tech|life|career|other>`、`--title`、`--tags <a,b>`（slug 需已存在于 `tags/`）、`--card`。生成后编辑正文，再按脚本输出的提示在 `.content-private/` 里 commit + push 即可。
+
 示例（参考 `posts/typescript-tips.md`）：
 
 ```markdown
