@@ -7,7 +7,7 @@
 
 ## 项目背景（一句话）
 
-Astro v7 SSR + React + Tailwind v4 + Vercel adapter 的个人博客，Git-based 内容存储（文章/标签/卡片 Markdown 在**独立私密内容仓库**，由 `predev`/`prebuild` 钩子 clone 到 `.content-private/`），单管理员密码鉴权（middleware 注入 `Astro.locals.isAdmin`），私密标签绑定的文章/卡片对访客完全隐藏。**阶段 1-6 均已完成**：可见性系统、分类/标签/About/Resume 页、登录/登出 + 速率限制 + CSRF + Vercel 部署、全站搜索（MiniSearch）、单篇导出 Markdown、About 页写作频率热力图、知识卡片弹窗轮播（类 Zettelkasten）。线上域名：`https://special-obstacle-blog.vercel.app`。
+Astro v7 SSR + React + Tailwind v4 + Vercel adapter 的个人博客，Git-based 内容存储（文章/标签/卡片 Markdown 在**独立私密内容仓库**，由 `predev`/`prebuild` 钩子 clone 到 `.content-private/`），单管理员密码鉴权（middleware 注入 `Astro.locals.isAdmin`），私密标签绑定的文章/卡片对访客完全隐藏。**阶段 1-6 均已完成**：可见性系统、分类/标签/About/Resume 页、登录/登出 + 速率限制 + CSRF + Vercel 部署、全站搜索（MiniSearch）、单篇导出 Markdown、About 页写作频率热力图、知识卡片弹窗轮播（类 Zettelkasten）。线上域名：`https://www.speobs.com`（裸域 `speobs.com` 308 重定向到 www；原 `special-obstacle-blog.vercel.app` 仍由 Vercel 提供）。
 
 ## 当前进度
 

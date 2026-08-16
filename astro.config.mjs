@@ -13,8 +13,8 @@ export default defineConfig({
   // 单篇页面可通过 `export const prerender = true` 重新静态化
   output: "server",
 
-  // 站点地址（部署后替换为真实域名，影响 sitemap/canonical）
-  site: "https://special-obstacle-blog.vercel.app",
+  // 站点地址（自定义域名，影响 sitemap/canonical；裸域 speobs.com 308 到 www）
+  site: "https://www.speobs.com",
 
   vite: {
     plugins: [tailwindcss()],
